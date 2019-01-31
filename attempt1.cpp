@@ -8,25 +8,56 @@ using namespace std;
 class Prometheus {
 
 private:
-  float xmin, xmax, ymin, ymax; //Grid specifications
-  unsigned N; //Resolution constant
+  double xmin, xmax, ymin, ymax; //Grid specifications
+  // as for now, keep the x and y distances the same
+  unsigned N; // number of nodes in each direction, ie index goes from 0 to N-1
   vector<float> potential;
   vector<float> charge;
   vector<bool> fixedpotential; //Bool type to check if potential fixed Y/N... skip on basis of condition
 public:
-  Prometheus(xmin, xmax, ymin, ymax, N);
-  float xmin() const;
-  float xmax() const;
-  float ymin() const;
-  float ymax() const;
-  unsigned u() const;
-  float h() const; //Stepsize
-  
-  
-  
-  
+  Prometheus(double x1, double x2, double y1, double y2, unsigned index_scope);
+  void set_initial();
+  //double xmin() const;
+  //double xmax() const;
+  //double ymin() const;
+  //double ymax() const;
+  //unsigned u() const;
+  double h() const; //Stepsize
+  double x(unsigned x_index);
+  double y(unsigned y_index);
 
+};
 
+// Constructor to read grid specifications
+Prometheus::Prometheus(double x1, double x2, double y1, double y2, unsigned index_scope) {
+    xmin = x1;
+    xmax = x2;
+    ymin = y1;
+    ymax = y2;
+    N = index_scope;
+};
+
+// h returns grid spacing
+double Prometheus::h() const {
+    return (xmax-xmin)/(N-1);
+}
+
+// x returns horizontal position as function of horizontal index
+double Prometheus::x(unsigned x_index){
+    return xmin + h()*x_index;
+};
+
+// y returns vertical position as a function of vertical index
+double Prometheus::y(unsigned y_index){
+    return ymin + h()*y_index;
+};
+
+// This function is supposed to set a initial grid
+void Prometheus::set_initial(){
+    for (unsigned i = 0; i<N; i++){
+            for (unsigned i = 0; i<N; i++){
+            }
+    }
 };
 
 
@@ -34,12 +65,14 @@ public:
 int main()
 {
     cout << "Hello world!" << endl;
-    int N=301; // make it odd
-    double a = 5; // small radius
-    double b = 10; // large radius
-    double V = 100; // potential at outer cylinder
 
-    double h = 2*b/(double)(N-1); // grid spacing
+    Prometheus simulation(0, 10, 0, 10, 101);
+    simulation.set_initial();
+
+
+
+
+    /*double h = 2*b/(double)(N-1); // grid spacing
     // i - vertical index, j - horizontal index, 0<=i,j<N
     int p; // p = i + jN
 
@@ -94,7 +127,7 @@ int main()
         }
         iterations.push_back(next);
         next.clear();
-    }
+    }*/
 
     return 0;
 }
