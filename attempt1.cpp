@@ -5,6 +5,32 @@
 
 using namespace std;
 
+class Prometheus {
+
+private:
+  float xmin, xmax, ymin, ymax; //Grid specifications
+  unsigned N; //Resolution constant
+  vector<float> potential;
+  vector<float> charge;
+  vector<bool> fixedpotential; //Bool type to check if potential fixed Y/N... skip on basis of condition
+public:
+  Prometheus(xmin, xmax, ymin, ymax, N);
+  float xmin() const;
+  float xmax() const;
+  float ymin() const;
+  float ymax() const;
+  unsigned u() const;
+  float h() const; //Stepsize
+  
+  
+  
+  
+
+
+};
+
+
+
 int main()
 {
     cout << "Hello world!" << endl;
