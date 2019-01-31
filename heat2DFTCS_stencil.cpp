@@ -14,6 +14,23 @@ struct stencil2D {
     double negative_s[41][41];
 };
 
+class Grid{
+    private:
+        int x_dim, y_dim; // dimensions of the grid
+        float N; // resolution
+        vector<vector <float>> grid;
+        float dx, dy;
+    public:
+        void Grid() {
+            x_dim = 40;
+            y_dim = 40;
+            N = 10; // represents the physical dimensions of the grid
+            dx = N/x_dim;
+            dy = N/y_dim;
+        }
+}
+
+
 void Heat2D_next(double (*A)[41][41], double (*B)[41][41], stencil2D *stenc, bool A1st, double alpha, double dx, double dt){
     double pos[][41] = (*stenc).positive_s;
     double neg[][41] = (*stenc).negative_s;
