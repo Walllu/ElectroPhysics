@@ -52,14 +52,15 @@ int main()
     iterations.push_back(grid);
 
     double rel = 1;
-    if (rel > 0.01){
+    while (rel > 0.01){
+	rel = 0;
         for (p=0; p<N*N; p++){
 
             if(find(out.begin(), out.end(), p) != out.end()) {
                 next.push_back(iterations.back()[p]);
             }
             else{
-                next.push_back(iterations.back()[p] + (1/2)*(iterations.back()[p+1] + iterations.back()[p-1] + iterations.back()[p+N]));
+                next.push_back(iterations.back()[p] + (1/2)*(iterations.back()[p+1] + iterations.back()[p-1] +iterations.back()[p-N] + iterations.back()[p+N]));
                 if (abs(next.back()-iterations.back()[p])/iterations.back()[p] > rel){
                     rel = abs(next.back()-iterations.back()[p])/iterations.back()[p];
                 }

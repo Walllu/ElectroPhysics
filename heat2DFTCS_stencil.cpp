@@ -3,6 +3,8 @@
 #include <cmath>
 using namespace std;
 
+cout << "Hello" << endl;
+
 int dimension = 41; // x,y are going to go from [0, dimension]
 
 struct stencil2D {
