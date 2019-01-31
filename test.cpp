@@ -27,7 +27,7 @@ class Grid{
         }
         void get(){
             cout << x_dim << endl;
-            cout << grid << endl;
+            //cout << grid << endl;
         }
 };
 
