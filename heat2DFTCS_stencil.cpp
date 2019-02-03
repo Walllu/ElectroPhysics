@@ -3,10 +3,8 @@
 #include <cmath>
 using namespace std;
 
-cout << "Hello" << endl;
 
-int dimension = 41; // x,y are going to go from [0, dimension]
-
+/*
 struct stencil2D {
     int x_dim;
     int y_dim;
@@ -14,137 +12,185 @@ struct stencil2D {
     double positive_s[41][41];
     // negative_s encodes the (zero) boundary condition locations (using 1's and 0's, former standing for non-zero, latter standing for the zero locations)
     double negative_s[41][41];
-};
+};*/
 
 class Grid{
     private:
         int x_dim, y_dim; // dimensions of the grid
-        float N; // resolution
-        vector<vector <float>> grid;
-        float dx, dy;
+        float dx, dy;   // resolution in each x,y direction
+        vector<vector <double>> grid;
     public:
-        void Grid() {
-            x_dim = 40;
-            y_dim = 40;
-            N = 10; // represents the physical dimensions of the grid
-            dx = N/x_dim;
-            dy = N/y_dim;
+        int default_dimension = 11;
+        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
+            // default configuration
+            vector<double> row(x_dim); // construct the grid of zeros
+            vector< vector<double> > columns;
+            for(int i=0;i<x_dim;i++){
+                columns.push_back(row);
+            }
+            grid = columns; // default 0's matrix
         }
-}
-
-
-void Heat2D_next(double (*A)[41][41], double (*B)[41][41], stencil2D *stenc, bool A1st, double alpha, double dx, double dt){
-    double pos[][41] = (*stenc).positive_s;
-    double neg[][41] = (*stenc).negative_s;
-    int j = 0;
-    int k = 0;
-    if(A1st){
-        // A is the next, B is the previous
-        for(j=0;j<dimension;j++){
-            for(k=0;k<dimension;k++){
-                // check stencils first
-                if(pos[j][k]!=0){
-                    (*A)[j][k]=pos[j][k];
-                } else if(neg[j][k]==0){
-                    (*A)[j][k]=pos[j][k];
-                } else {
-                // FTCS on A using B as previous moment
-                u_j1_k_n = (*B)[j+1][k]; // this is the "j+1"th  point of the previous function
-                u_j_k1_n = (*B)[j][k+1];
-                u_j_1_k_n = (*B)[j-1][k];
-                u_j_k_1_n = (*B)[j][k-1];
-                u_j_k_n = (*B)[j][k]; // previous time step, same location
-                // now for the next time step
-                u_j_k_n1 = u_j_k_n + alpha*(dt/(dx*dx))*(u_j1_k_n + u_j_k1_n + u_j_1_k_n + u_j_k_1_n - 4*u_j_k_n);
-                (*A)[j][k] = u_j_k_n1;
+        Grid(int x_dim_arg, int y_dim_arg, float x_phys, float y_phys): x_dim(x_dim_arg), y_dim(y_dim_arg) {
+            // this is a more flexible default starter grid of zeros
+            // just define the x,y array size and physical depth of each
+            // and we set dx, dy here based on physical_length/grid_spaces
+            dx = x_phys/x_dim;
+            dy = y_phys/y_dim;
+            vector<double> row(x_dim); // construct the grid of zeros
+            vector< vector<double> > columns;
+            for(int i=0;i<x_dim;i++){
+                columns.push_back(row);
+            }
+            grid = columns; // default 0's matrix
+        }
+        int get_x_dim(){
+            return x_dim;
+        }
+        int get_y_dim(){
+            return y_dim;
+        }
+        float get_dx(){
+            return dx;
+        }
+        float get_dy(){
+            return dy;
+        }
+        void set_point(int i,int j, double val){
+            grid[i][j] = val;
+        }
+        double get_point(int i,int j){
+            return grid[i][j];
+        }
+        void grid_print(){
+            for(int i=0;i<x_dim; i++){
+                for(int j=0;j<y_dim; j++){
+                    cout << "(" << grid[i][j] << ")";
                 }
+                cout << endl;
             }
         }
-    } else {
-        // B is the next, A is the previous
-        for{int j=0;j<dimension;j++}{
-            for(int k=0;k<dimension;k++){
-                // check stencils first
-                if(pos[j][k]!=0){
-                    (*B)[j][k]=pos[j][k];
-                } else if(neg[j][k]==0){
-                    (*B)[j][k]=pos[j][k];
+};
+// class for making the initial value stencils for problems
+class Stencil{
+    private:
+        // Grids that represnet the locations and values of all the constants
+        Grid problem_values, problem_constant_locations;
+    public:
+        Stencil(int num){
+            if(num==1){
+                //create problem 1, I'll just do hot walls)
+                Grid A, B;
+                for(int i=0; i<A.get_x_dim(); i++){
+                    for(int j=0; j<A.get_y_dim(); j++){
+                        if(i==0||j==0||i==A.get_x_dim()-1||j==A.get_y_dim()-1){
+                            //A[i][j]=20; // location and value of point
+                            //B[i][j]=1; // mark as constant
+                            A.set_point(i,j,20);
+                            B.set_point(i,j,1);
+                        } else{
+                            //A[i][j]=0;  //location and value of point
+                            //B[i][j]=0; // mark as variable
+                            A.set_point(i,j,0);
+                            B.set_point(i,j,0);
+                        }
+                    }
                 }
-                // FTCS on B using A as previous moment
-                u_j1_k_n = (*A)[j+1][k]; // this is the "j+1"th  point of the previous function
-                u_j_k1_n = (*A)[j][k+1];
-                u_j_1_k_n = (*A)[j-1][k];
-                u_j_k_1_n = (*A)[j][k-1];
-                u_j_k_n = (*A)[j][k]; // previous time step, same location
-                // now for the next time step
-                u_j_k_n1 = u_j_k_n + alpha*(dt/(dx*dx))*(u_j1_k_n + u_j_k1_n + u_j_1_k_n + u_j_k_1_n - 4*u_j_k_n);
-                (*B)[j][k] = u_j_k_n1;
+                problem_values = A;
+                problem_constant_locations = B; // 1 represents constant, 0 represents variable
+                // end of problem 1
+            }
+            else if(num==2){
+                // problem 2
             }
         }
-    }
-}
-
-void stencil_maker(stencil2D *stenc, int x_dim, int y_dim){
-    // This function takes the multi-dimensional array and creates a stencil out of it
-    double pos_arr[41][41];
-    double neg_arr[41][41];
-    // For now let's just make the hot walls boundary condition
-    double temp = 20;
-    int j = 0;
-    int k = 0;
-    for(j=0;j<dimension;j++){
-        for(k=0;k<dimension;k++){
-            // boundaries
-            if(j==0 || k==0 || j==dimension-1 || k==dimension-1){
-                pos_arr[j][k]=temp;
-                neg_arr[j][k]=1;
+        void stencil_print(){
+            for(int i=0;i<problem_values.get_x_dim(); i++){
+                for(int j=0;j<problem_values.get_y_dim(); j++){
+                    cout << "(" << problem_values.get_point(i,j) << "," << problem_constant_locations.get_point(i,j) << ")";
+                }
+                cout << endl;
+            }
+        }
+        Grid get_values(){
+            return problem_values;
+        }
+        Grid get_constants(){
+            return problem_constant_locations;
+        }
+        double get_value_at_point(int i, int j){
+            return problem_values.get_point(i,j);
+        }
+        bool is_it_constant(int i, int j){
+            if(problem_constant_locations.get_point(i,j)==1){
+                return true;
             } else {
-                pos_arr[j][k]=0;
-                neg_arr[j][k]=0;
+                return false;
+            }
+        }
+};
+// function for evaluating the next time-step via FTCS
+void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double alpha, float dt){
+    // Now we want to loop through all the spatial coordinates of the next_u, contructing it
+    int x_ext = next_u.get_x_dim();
+    int y_ext = next_u.get_y_dim();
+    float dx = next_u.get_dx();
+    float dy = next_u.get_dy();
+    for(int j=0;j<x_ext;j++){
+        for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
+            // check if the point is constant
+            if(stencil.is_it_constant(j,k)){
+                next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
+            } else {
+                double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
+                u_j1_k_n = prev_u.get_point(j+1, k);
+                u_j_k1_n = prev_u.get_point(j, k+1);
+                u_j_1_k_n = prev_u.get_point(j-1,k);
+                u_j_k_1_n = prev_u.get_point(j,k-1);
+                u_j_k_n = prev_u.get_point(j,k); // now we have all the points from prev_u
+                u_j_k_n1 = u_j_k_n + alpha*(dt/(pow(dx,2)))*(u_j1_k_n + u_j_k1_n + u_j_1_k_n + u_j_k_1_n - 4*u_j_k_n);
+                next_u.set_point(j,k, u_j_k_n1);
             }
         }
     }
-    // now set the parameters in the stencil
-    (*stenc).x_dim = x_dim;
-    (*stenc).y_dim = y_dim;
-    (*stenc).positive_s = pos_arr;
-    (*stenc).negative_s = neg_arr;
 }
 
 int main(){
     // Program for calculating the FTCS Heat Diffusion from initial conditions
-    double dx = 0.2;
-    double dt = 0.01;
-    double tmax = 10.0;
-    double alpha = 1.0;
-    // create stencil for simulation
-    stencil2D stencil;
-    stencil_maker(&stencil, dimension, dimension); // populate it with real date (hot walls, for now)
-    // Create multidimensional arrays to work with
-    double A[dimension][dimension];
-    double B[dimension][dimension];
-    bool A1st = true; // we'll switch A and B out as the "previous moment in time" and just overwrite the other
-    // now let's loop through time
-    double time;
-    for(time=0.0;time<tmax;t+=dt){
+    Grid A, B; // these two are going to be switiching back and forth
+    bool A_next = true; // this boolean is going to determine whether A or B is going to store the next moment in time
+    
+    // create stencil for the simulation
+    Stencil stenc(1);
+    //stenc.stencil_print();
+    // working with default initial conditions dx, dy, dt, tmax
+    int maximum_time_in_seconds;
+    float dt;
+    cout << "Maximum time in seconds, and time step-size (dt)" << endl;
+    cin >> maximum_time_in_seconds >> dt;
+    float alpha = 1.0;
+    // Now let's begin looping through time
+    for(double time = 0.0; time<maximum_time_in_seconds; time+=dt){
         cout << time << endl;
         if(time==0.0){
-            A = stencil;
-            A1st = false; // setting it up so next time, we take A to be the previous moment in the Heat2D function
-        }
-        else{
-            // compute the next moment with FTCS
-            Heat2D_next( &A, &B, &stencil, A1st, alpha, dx, dt);
-            A1st = !A1st;
+            // set the initial conditions up
+            A = stenc.get_values(); // one time allocations of memeory
+            A_next = !A_next; // flip the boolean
+        } else {
+            if(A_next){
+                // A is next up --> next_u = A; prev_u = B;
+                Heat2D_next_u(A, B, stenc, alpha, time);
+            } else{
+                // B is next up --> next_u = B; prev_u = A;
+                Heat2D_next_u(B, A, stenc, alpha, time);
+            }
+            A_next = !A_next;
         }
     }
-    cout << "done!" << endl;
-    if(A1st){
-        cout << "B is the final result" << endl;
-        cout << B[5][5] << endl;
+    cout << "Done! : " << A_next << endl;
+    if(A_next){
+        B.grid_print();
     } else {
-        cout << "A is the final result" << endl;
-        cout << A[5][5] << endl;
+         A.grid_print();
     }
     return 0;
 }
