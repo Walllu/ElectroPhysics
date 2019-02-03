@@ -3,25 +3,16 @@
 #include <cmath>
 using namespace std;
 
-
-/*
-struct stencil2D {
-    int x_dim;
-    int y_dim;
-    // positve_s encodes the boundary condition locations and values (non-zero)
-    double positive_s[41][41];
-    // negative_s encodes the (zero) boundary condition locations (using 1's and 0's, former standing for non-zero, latter standing for the zero locations)
-    double negative_s[41][41];
-};*/
-
+// a helper class that defines the grid and grid spacing
 class Grid{
     private:
         int x_dim, y_dim; // dimensions of the grid
         float dx, dy;   // resolution in each x,y direction
-        vector<vector <double>> grid;
+        vector<vector <double>> grid; // the actual grid of some dimension
     public:
-        int default_dimension = 11;
-        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
+        int default_dimension = 11; // setting this, and calling default constuctor makes a square grid
+        float default_spacing
+        Grid() : x_dim(default_dimension), y_dim(default_dimension), dx(default_spacing), dy(default_spacing) {
             // default configuration
             vector<double> row(x_dim); // construct the grid of zeros
             vector< vector<double> > columns;
@@ -44,24 +35,24 @@ class Grid{
             grid = columns; // default 0's matrix
         }
         int get_x_dim(){
-            return x_dim;
+            return x_dim; // getter for x dimension
         }
         int get_y_dim(){
-            return y_dim;
+            return y_dim; // getter for y dimension
         }
         float get_dx(){
-            return dx;
+            return dx; // getter for dx space-step
         }
         float get_dy(){
-            return dy;
+            return dy; // getter for dy space-step
         }
         void set_point(int i,int j, double val){
-            grid[i][j] = val;
+            grid[i][j] = val; // sets a point in the grid to "val"
         }
         double get_point(int i,int j){
-            return grid[i][j];
+            return grid[i][j]; // getter for value of point in grid
         }
-        void grid_print(){
+        void grid_print(){  // method for printing the whole grid
             for(int i=0;i<x_dim; i++){
                 for(int j=0;j<y_dim; j++){
                     cout << "(" << grid[i][j] << ")";
@@ -75,8 +66,10 @@ class Stencil{
     private:
         // Grids that represnet the locations and values of all the constants
         Grid problem_values, problem_constant_locations;
+        // problem_values are the locations and values of all points in the initial moment
+        // problem_constant_locations has the locations of all constant values in the grid
     public:
-        Stencil(int num){
+        Stencil(int num){ // we make a constructor that acts differently depending on which input you start with
             if(num==1){
                 //create problem 1, I'll just do hot walls)
                 Grid A, B;
@@ -134,13 +127,13 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
     int x_ext = next_u.get_x_dim();
     int y_ext = next_u.get_y_dim();
     float dx = next_u.get_dx();
-    float dy = next_u.get_dy();
+    float dy = next_u.get_dy(); // setting up all the values we need
     for(int j=0;j<x_ext;j++){
         for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
             // check if the point is constant
             if(stencil.is_it_constant(j,k)){
                 next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
-            } else {
+            } else { // if not constant, then we run FTCS on that point
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
                 u_j1_k_n = prev_u.get_point(j+1, k);
                 u_j_k1_n = prev_u.get_point(j, k+1);
