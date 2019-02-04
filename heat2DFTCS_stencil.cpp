@@ -11,8 +11,8 @@ class Grid{
         vector<vector <double>> grid; // the actual grid of some dimension
     public:
         int default_dimension = 11; // setting this, and calling default constuctor makes a square grid
-        float default_spacing
-        Grid() : x_dim(default_dimension), y_dim(default_dimension), dx(default_spacing), dy(default_spacing) {
+        float default_spacing = 0.2;
+        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
             // default configuration
             vector<double> row(x_dim); // construct the grid of zeros
             vector< vector<double> > columns;
