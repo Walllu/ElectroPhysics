@@ -12,7 +12,7 @@ class Grid{
     public:
         int default_dimension = 11; // setting this, and calling default constuctor makes a square grid
         float default_spacing = 0.2;
-        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
+        Grid() : x_dim(41), y_dim(41), dx(0.2), dy(0.2) {
             // default configuration
             vector<double> row(x_dim); // construct the grid of zeros
             vector< vector<double> > columns;
@@ -128,6 +128,7 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
     int y_ext = next_u.get_y_dim();
     float dx = next_u.get_dx();
     float dy = next_u.get_dy(); // setting up all the values we need
+    double courant_factor = alpha*(dt/pow(dx,2));
     for(int j=0;j<x_ext;j++){
         for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
             // check if the point is constant
@@ -140,7 +141,7 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
                 u_j_1_k_n = prev_u.get_point(j-1,k);
                 u_j_k_1_n = prev_u.get_point(j,k-1);
                 u_j_k_n = prev_u.get_point(j,k); // now we have all the points from prev_u
-                u_j_k_n1 = u_j_k_n + alpha*(dt/(pow(dx,2)))*(u_j1_k_n + u_j_k1_n + u_j_1_k_n + u_j_k_1_n - 4*u_j_k_n);
+                u_j_k_n1 = u_j_k_n + courant_factor*(u_j1_k_n + u_j_k1_n + u_j_1_k_n + u_j_k_1_n - 4*u_j_k_n);
                 next_u.set_point(j,k, u_j_k_n1);
             }
         }
@@ -156,14 +157,14 @@ int main(){
     Stencil stenc(1);
     //stenc.stencil_print();
     // working with default initial conditions dx, dy, dt, tmax
-    int maximum_time_in_seconds;
+    int maximum_time_in_seconds, transform;
     float dt;
-    cout << "Maximum time in seconds, and time step-size (dt)" << endl;
-    cin >> maximum_time_in_seconds >> dt;
+    cout << "Maximum time in seconds, and time step-size (dt) : transform too" << endl;
+    cin >> maximum_time_in_seconds >> dt >> transform;
     float alpha = 1.0;
+    cout << " Courant Condition?" << alpha*(dt/pow(A.get_dx(), 2)) << endl;
     // Now let's begin looping through time
     for(double time = 0.0; time<maximum_time_in_seconds; time+=dt){
-        cout << time << endl;
         if(time==0.0){
             // set the initial conditions up
             A = stenc.get_values(); // one time allocations of memeory
@@ -171,10 +172,17 @@ int main(){
         } else {
             if(A_next){
                 // A is next up --> next_u = A; prev_u = B;
-                Heat2D_next_u(A, B, stenc, alpha, time);
+                Heat2D_next_u(A, B, stenc, alpha, dt);
             } else{
                 // B is next up --> next_u = B; prev_u = A;
-                Heat2D_next_u(B, A, stenc, alpha, time);
+                Heat2D_next_u(B, A, stenc, alpha, dt);
+            }
+            if(time == transform*dt){ // debugging purposes
+                cout << time << endl;
+                A.grid_print();
+                cout <<"A^^"<< endl;
+                B.grid_print();
+                cout <<"B^^"<< endl;
             }
             A_next = !A_next;
         }
