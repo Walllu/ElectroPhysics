@@ -137,6 +137,11 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
                 next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
             } else { // if not constant, then we run FTCS on that point
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
+                // as variable names can't contain '+', '-', or '[]' characters
+                // I've made the following notation:
+                    // if u_{j,k}^n denotes the (j,k) point at time-step 'n'
+                    // --> u_{j+1,k}^n  is  u_j1_k_n
+                    // --> u_{j,k-1}^n  is  u_j_k_1_n
                 u_j1_k_n = prev_u.get_point(j+1, k);
                 u_j_k1_n = prev_u.get_point(j, k+1);
                 u_j_1_k_n = prev_u.get_point(j-1,k);
@@ -148,7 +153,6 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
         }
     }
 }
-
 void timeloop(Stencil& stencil){
     // implements a timeloop for each initial condition stencil
     Grid A, B; // these two are going to be switiching back and forth
@@ -156,12 +160,14 @@ void timeloop(Stencil& stencil){
     // working with default initial conditions dx, dy, dt, tmax
     int maximum_time_in_seconds, transform;
     float dt;
+    // time is an integer, time step-size (dt) is a float, and transform is an integer used for debugging purposes - enter 0 for transform if you don'e give a shit about debugging
     cout << "Maximum time in seconds, and time step-size (dt) : transform too" << endl;
-    cin >> maximum_time_in_seconds >> dt >> transform;
+    cin >> maximum_time_in_seconds >> dt >> transform;  // "transform" is the iteration number that you want to view - transform = 1 is the first time step, 2 is 2nd, etc.
     cout << "Input your value for alpha" << endl;
     float alpha;
     cin >> alpha;
-    cout << " Courant Condition?" << alpha*(dt/pow(A.get_dx(), 2)) << endl;
+    //cout << " Courant Condition?" << alpha*(dt/pow(A.get_dx(), 2)) << endl;
+    cout << "Starting FTCS with tmax: " << maximum_time_in_seconds << ", dt: " << dt << ", and alpha: " << alpha << endl;
     // Now let's begin looping through time
     for(double time = 0.0; time<maximum_time_in_seconds; time+=dt){
         if(time==0.0){
@@ -193,12 +199,17 @@ void timeloop(Stencil& stencil){
          A.grid_print();
     }
 }
-
 int main(){
-    // Program for calculating the FTCS Heat Diffusion from initial conditions
+    // Program for calculating the FTCS Heat Diffusion from initial conditions - modifying the initial conditions and calling the correct Stencil constructor
+    // one can recreate an electric potential situation as well.
+    // The program is structured so that we can run a timeloop on a specfic situation by creating the Stencil, and calling the "timeloop" function on it
+    // for example:
+    
     // create stencil for the simulation
     Stencil stenc(1); //stenc.stencil_print();
     // call the timeloop
     timeloop(stenc);
+
+    // repeat the above for other initial conditions.
     return 0;
 }
