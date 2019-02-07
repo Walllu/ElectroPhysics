@@ -8,7 +8,7 @@ class Grid{
     private:
         int x_dim, y_dim; // dimensions of the grid
         float dx, dy;   // resolution in each x,y direction
-        vector<vector <double>> grid; // the actual grid of some dimension
+        vector<vector <double> > grid; // the actual grid of some dimension
     public:
         int default_dimension = 11; // setting this, and calling default constuctor makes a square grid
         float default_spacing = 0.2;
@@ -93,7 +93,30 @@ class Stencil{
                 // end of problem 1
             }
             else if(num==2){
-                // problem 2
+                Grid A, B;
+                for(int i=0; i<A.get_x_dim(); i++){
+                    for(int j=0; j<A.get_y_dim(); j++){
+                        if(j==0){
+                            //A[i][j]=20; // location and value of point
+                            //B[i][j]=1; // mark as constant
+                            A.set_point(i,j,20);
+                            B.set_point(i,j,1);
+                        } else if(j==A.get_y_dim()-1){
+                            A.set_point(i,j,-20);
+                            B.set_point(i,j,1);
+                        }
+                        else{
+                            //A[i][j]=0;  //location and value of point
+                            //B[i][j]=0; // mark as variable
+                            A.set_point(i,j,0);
+                            B.set_point(i,j,0);
+                        }
+                    }
+                }
+                problem_values = A;
+                problem_constant_locations = B; // 1 represents constant, 0 represents variable
+                // end of problem 1
+
             }
         }
         void stencil_print(){
@@ -135,6 +158,37 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
             // check if the point is constant
             if(stencil.is_it_constant(j,k)){
                 next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
+            } else if(j==0||k==0||j==x_ext-1||k==y_ext-1){
+                // if we have an edge case that is not constant
+                double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
+                int k_1, j_1, k1, j1;
+                k_1 = k - 1;
+                j_1 = j - 1;
+                k1 = k + 1;
+                j1 = j + 1;
+                // if j=0, then a decrease in k is bad
+                if(j==0){
+                    j_1 = x_ext - 1;
+                }
+                // if k=0, then a decrease in j is bad
+                if(k==0){
+                    k_1 = y_ext - 1;
+                }
+                // if j==x_ext-1 then an increase in k is bad
+                if(j==x_ext-1){
+                    j1 = 0;
+                }
+                // if k--y_ext-1 then an increase in j is bad
+                if(k==y_ext-1){
+                    k1 = 0;
+                }
+                u_j1_k_n = prev_u.get_point(j1, k);
+                u_j_k1_n = prev_u.get_point(j, k1);
+                u_j_1_k_n = prev_u.get_point(j_1,k);
+                u_j_k_1_n = prev_u.get_point(j,k_1);
+                u_j_k_n = prev_u.get_point(j,k); // now we have all the points from prev_u
+                u_j_k_n1 = u_j_k_n + courant_factor1*(u_j1_k_n -2*u_j_k_n + u_j_k1_n) + courant_factor2*(u_j_1_k_n + u_j_k_1_n - 2*u_j_k_n);
+                next_u.set_point(j,k, u_j_k_n1);
             } else { // if not constant, then we run FTCS on that point
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
                 // as variable names can't contain '+', '-', or '[]' characters
@@ -192,6 +246,7 @@ void timeloop(Stencil& stencil){
             A_next = !A_next;
         }
     }
+    cout << "wat" << endl;
     cout << "Done! : " << A_next << endl;
     if(A_next){
         B.grid_print();
@@ -206,8 +261,9 @@ int main(){
     // for example:
     
     // create stencil for the simulation
-    Stencil stenc(1); //stenc.stencil_print();
+    Stencil stenc(2); //stenc.stencil_print();
     // call the timeloop
+    stenc.stencil_print();
     timeloop(stenc);
 
     // repeat the above for other initial conditions.
