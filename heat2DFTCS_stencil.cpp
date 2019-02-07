@@ -157,7 +157,9 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
         for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
             // check if the point is constant
             if(stencil.is_it_constant(j,k)){
-                next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
+                // if it is constant, we want to ignore it. 
+                continue; // Move onto next iteration
+                //next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
             } else if(j==0||k==0||j==x_ext-1||k==y_ext-1){
                 // if we have an edge case that is not constant
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
@@ -227,6 +229,7 @@ void timeloop(Stencil& stencil){
         if(time==0.0){
             // set the initial conditions up
             A = stencil.get_values(); // one time allocations of memeory
+            B = A;
             A_next = !A_next; // flip the boolean
         } else {
             if(A_next){
