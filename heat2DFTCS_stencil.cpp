@@ -66,55 +66,55 @@ class Stencil{
     private:
         // Grids that represnet the locations and values of all the constants
         Grid problem_values, problem_constant_locations;
-        // problem_values are the locations and values of all points in the initial moment
+        // problem_values are the 'locations and values of all points in the initial moment
         // problem_constant_locations has the locations of all constant values in the grid
     public:
         Stencil(int num){ // we make a constructor that acts differently depending on which input you start with
             if(num==1){
                 //create problem 1, I'll just do hot walls)
-                Grid A, B;
-                for(int i=0; i<A.get_x_dim(); i++){
-                    for(int j=0; j<A.get_y_dim(); j++){
-                        if(i==0||j==0||i==A.get_x_dim()-1||j==A.get_y_dim()-1){
+                Grid intitial_values, constant_locations;
+                for(int i=0; i<intitial_values.get_x_dim(); i++){
+                    for(int j=0; j<intitial_values.get_y_dim(); j++){
+                        if(i==0||j==0||i==intitial_values.get_x_dim()-1||j==intitial_values.get_y_dim()-1){
                             //A[i][j]=20; // location and value of point
                             //B[i][j]=1; // mark as constant
-                            A.set_point(i,j,20);
-                            B.set_point(i,j,1);
+                            intitial_values.set_point(i,j,20);
+                            constant_locations.set_point(i,j,1);
                         } else{
                             //A[i][j]=0;  //location and value of point
                             //B[i][j]=0; // mark as variable
-                            A.set_point(i,j,0);
-                            B.set_point(i,j,0);
+                            intitial_values.set_point(i,j,0);
+                            constant_locations.set_point(i,j,0);
                         }
                     }
                 }
-                problem_values = A;
-                problem_constant_locations = B; // 1 represents constant, 0 represents variable
+                problem_values = intitial_values;
+                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
                 // end of problem 1
             }
             else if(num==2){
-                Grid A, B;
-                for(int i=0; i<A.get_x_dim(); i++){
-                    for(int j=0; j<A.get_y_dim(); j++){
+                Grid initial_values, constant_locations;
+                for(int i=0; i<initial_values.get_x_dim(); i++){
+                    for(int j=0; j<initial_values.get_y_dim(); j++){
                         if(j==0){
                             //A[i][j]=20; // location and value of point
                             //B[i][j]=1; // mark as constant
-                            A.set_point(i,j,20);
-                            B.set_point(i,j,1);
+                            initial_values.set_point(i,j,20);
+                            constant_locations.set_point(i,j,1);
                         } else if(j==A.get_y_dim()-1){
-                            A.set_point(i,j,-20);
-                            B.set_point(i,j,1);
+                            initial_values.set_point(i,j,-20);
+                            constant_locations.set_point(i,j,1);
                         }
                         else{
                             //A[i][j]=0;  //location and value of point
                             //B[i][j]=0; // mark as variable
-                            A.set_point(i,j,0);
-                            B.set_point(i,j,0);
+                            initial_values.set_point(i,j,0);
+                            constant_locations.set_point(i,j,0);
                         }
                     }
                 }
-                problem_values = A;
-                problem_constant_locations = B; // 1 represents constant, 0 represents variable
+                problem_values = initial_values;
+                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
                 // end of problem 1
 
             }
