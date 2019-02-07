@@ -101,7 +101,7 @@ class Stencil{
                             //B[i][j]=1; // mark as constant
                             initial_values.set_point(i,j,20);
                             constant_locations.set_point(i,j,1);
-                        } else if(j==A.get_y_dim()-1){
+                        } else if(j==initial_values.get_y_dim()-1){
                             initial_values.set_point(i,j,-20);
                             constant_locations.set_point(i,j,1);
                         }
@@ -109,7 +109,7 @@ class Stencil{
                             //A[i][j]=0;  //location and value of point
                             //B[i][j]=0; // mark as variable
                             initial_values.set_point(i,j,0);
-                            constant_locations.set_point(i,j,0);
+                            //constant_locations.set_point(i,j,0);
                         }
                     }
                 }
@@ -246,7 +246,7 @@ void timeloop(Stencil& stencil){
             A_next = !A_next;
         }
     }
-    cout << "wat" << endl;
+
     cout << "Done! : " << A_next << endl;
     if(A_next){
         B.grid_print();
