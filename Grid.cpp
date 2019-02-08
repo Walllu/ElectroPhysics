@@ -7,10 +7,12 @@ using namespace std;
 class Grid{
     private:
         int x_dim, y_dim; //  number of nodes in x, y direction, (x, y index goes from 0 to x_dim - 1, y_dim - 1)
-        float dx, dy;   // grid spacing in each x,y direction
-        vector<vector <double> > grid; // the actual grid of some dimension
+        float dx, dy; // grid spacing in each x,y direction
+        float x_dist, y_dist; // physical x and y distance
+        vector<vector <double> > potential; // the actual grid of some dimension
+        vector<vector <bool> > constants;
     public:
-        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
+        /*Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
             // default configuration
             vector<double> y_axis(y_dim); // construct the grid of zeros
             vector< vector<double> > x_axis;
@@ -18,19 +20,27 @@ class Grid{
                 x_axis.push_back(y_axis);
             }
             grid = x_axis; // default 0's matrix
-        }
-        Grid(int x_dim_arg, int y_dim_arg, float x_phys, float y_phys): x_dim(x_dim_arg), y_dim(y_dim_arg) {
+        }*/
+        Grid(int x_dim_arg, int y_dim_arg, float x_dist_arg, float y_dist_arg): x_dim(x_dim_arg), y_dim(y_dim_arg), x_dist(x_dist_arg), y_dist(y_dist_arg){
             // this is a more flexible default starter grid of zeros
             // just define the x,y array size and physical depth of each
             // and we set dx, dy here based on physical_length/grid_spaces
-            dx = x_phys/(x_dim - 1);
-            dy = y_phys/(y_dim - 1);
-            vector <double> y_axis(y_dim); // construct the grid of zeros
-            vector < vector<double> > x_axis;
+            dx = x_dist/(x_dim - 1);
+            dy = y_dist/(y_dim - 1);
+
+            vector <double> y_axis_1(y_dim); // construct the grid of zeros
+            vector < vector<double> > x_axis_1;
             for(int i=0; i<x_dim; i++){
-                x_axis.push_back(y_axis);
+                x_axis_1.push_back(y_axis_1);
             }
-            grid = x_axis; // default 0's matrix
+            potential = x_axis_1; // default 0's matrix
+
+            vector <bool> y_axis_2(y_dim); // construct the grid of zeros
+            vector < vector<bool> > x_axis_2;
+            for(int i=0; i<x_dim; i++){
+                x_axis_2.push_back(y_axis_2);
+            }
+            constants = x_axis_2;
         }
         int get_x_dim(){
             return x_dim; // getter for x dimension
@@ -44,114 +54,86 @@ class Grid{
         float get_dy(){
             return dy; // getter for dy space-step
         }
-        float get_x_dist(int i){
+        float get_x_dist(){
+            return x_dist; // getter for dy space-step
+        }
+        float get_y_dist(){
+            return y_dist; // getter for dy space-step
+        }
+        float get_x_position(int i){
             return i*dx;
         }
-        float get_y_dist(int i){
+        float get_y_position(int i){
             return i*dy;
         }
         void set_point(int i,int j, double val){
-            grid[i][j] = val; // sets a point in the grid to "val"
+            potential[i][j] = val; // sets a point in the grid to "val"
+            // i refers to the y position, j to the x position
+        }
+        void set_constant(int i,int j){
+            constants[i][j] = true; // sets a point in the grid to "val"
             // i refers to the y position, j to the x position
         }
         double get_point(int i,int j){
-            return grid[i][j]; // getter for value of point in grid
+            return potential[i][j]; // getter for value of point in grid
             // i refers to the y position, j to the x position
+        }
+        bool is_it_constant(int i, int j){
+            return constants[i][j];
         }
         void grid_print(){  // method for printing the whole grid
             for(int i=0; i<x_dim; i++){
                 for(int j=0; j<y_dim; j++){
-                    cout << "(" << grid[i][j] << ")";
+                    cout << "(" << potential[i][j] << ")";
                 }
                 cout << endl;
             }
         }
 };
-// class for making the initial value stencils for problems
-class Stencil{
-    private:
-        // Grids that represnet the locations and values of all the constants
-        Grid problem_values, problem_constant_locations;
-        // problem_values are the 'locations and values of all points in the initial moment
-        // problem_constant_locations has the locations of all constant values in the grid
-    public:
-        Stencil(int num){ // we make a constructor that acts differently depending on which input you start with
-            if(num==1){
+// function for setting initial conditions
+void Set_initial (int num, Grid& grid){
+        if(num==1){
                 //create problem 1, I'll just do hot walls)
-                Grid intitial_values, constant_locations;
-                for(int i=0; i<intitial_values.get_x_dim(); i++){
-                    for(int j=0; j<intitial_values.get_y_dim(); j++){
-                        if(i==0||j==0||i==intitial_values.get_y_dim()-1||j==intitial_values.get_x_dim()-1){
+                for(int i=0; i<grid.get_x_dim(); i++){
+                    for(int j=0; j<grid.get_y_dim(); j++){
+                        if(i==0||j==0||i==grid.get_y_dim()-1||j==grid.get_x_dim()-1){
                             //A[i][j]=20; // location and value of point
                             //B[i][j]=1; // mark as constant
-                            intitial_values.set_point(i,j,20);
-                            constant_locations.set_point(i,j,1);
+                            grid.set_point(i,j,20);
+                            grid.set_constant(i,j);
                         } else{
                             //A[i][j]=0;  //location and value of point
                             //B[i][j]=0; // mark as variable
-                            intitial_values.set_point(i,j,0);
-                            constant_locations.set_point(i,j,0);
+                            grid.set_constant(i,j);
                         }
                     }
                 }
-                problem_values = intitial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
             }
             else if(num==2){
-                Grid initial_values, constant_locations;
-                for(int i=0; i<initial_values.get_x_dim(); i++){
-                    for(int j=0; j<initial_values.get_y_dim(); j++){
+                for(int i=0; i<grid.get_x_dim(); i++){
+                    for(int j=0; j<grid.get_y_dim(); j++){
                         if(j==0){
                             //A[i][j]=20; // location and value of point
                             //B[i][j]=1; // mark as constant
-                            initial_values.set_point(i,j,20);
-                            constant_locations.set_point(i,j,1);
-                        } else if(j==initial_values.get_y_dim()-1){
-                            initial_values.set_point(i,j,-20);
-                            constant_locations.set_point(i,j,1);
+                            grid.set_point(i,j,20);
+                            grid.set_constant(i,j);
+                        } else if(j==grid.get_y_dim()-1){
+                            grid.set_point(i,j,-20);
+                            grid.set_constant(i,j);
                         }
                         else{
                             //A[i][j]=0;  //location and value of point
                             //B[i][j]=0; // mark as variable
-                            initial_values.set_point(i,j,0);
+                            grid.set_point(i,j,0);
                             //constant_locations.set_point(i,j,0);
                         }
                     }
                 }
-                problem_values = initial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
+            }
+        }
 
-            }
-        }
-        void stencil_print(){
-            for(int i=0;i<problem_values.get_x_dim(); i++){
-                for(int j=0;j<problem_values.get_y_dim(); j++){
-                    cout << "(" << problem_values.get_point(i,j) << "," << problem_constant_locations.get_point(i,j) << ")";
-                }
-                cout << endl;
-            }
-        }
-        Grid get_values(){
-            return problem_values;
-        }
-        Grid get_constants(){
-            return problem_constant_locations;
-        }
-        double get_value_at_point(int i, int j){
-            return problem_values.get_point(i,j);
-        }
-        bool is_it_constant(int i, int j){
-            if(problem_constant_locations.get_point(i,j)==1){
-                return true;
-            } else {
-                return false;
-            }
-        }
-};
 // function for evaluating the next time-step via FTCS
-void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double alpha, float dt){
+void Heat2D_next_u(Grid& next_u, Grid& prev_u, const double alpha, float dt){
     // Now we want to loop through all the spatial coordinates of the next_u, contructing it
     int x_ext = next_u.get_x_dim();
     int y_ext = next_u.get_y_dim();
@@ -160,9 +142,9 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
     double courant_factor1 = 2.0*alpha*(dt/pow(dx,2));
     double courant_factor2 = 2.0*alpha*(dt/pow(dy,2));
     for(int j=0;j<x_ext;j++){
-        for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
+        for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my convenience - it's just an index
             // check if the point is constant
-            if(stencil.is_it_constant(j,k)){
+            if(prev_u.is_it_constant(j,k)){
                 // if it is constant, we want to ignore it.
                 continue; // Move onto next iteration
                 //next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
@@ -195,7 +177,7 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
                 u_j_1_k_n = prev_u.get_point(j_1,k);
                 u_j_k_1_n = prev_u.get_point(j,k_1);
                 u_j_k_n = prev_u.get_point(j,k); // now we have all the points from prev_u
-                u_j_k_n1 = u_j_k_n + courant_factor1*(u_j1_k_n -2*u_j_k_n + u_j_k1_n) + courant_factor2*(u_j_1_k_n + u_j_k_1_n - 2*u_j_k_n);
+                u_j_k_n1 = u_j_k_n + courant_factor1*(u_j1_k_n -2*u_j_k_n + u_j_1_k_n) + courant_factor2*(u_j_k_1_n + u_j_k1_n - 2*u_j_k_n);
                 next_u.set_point(j,k, u_j_k_n1);
             } else { // if not constant, then we run FTCS on that point
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
@@ -209,17 +191,18 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
                 u_j_1_k_n = prev_u.get_point(j-1,k);
                 u_j_k_1_n = prev_u.get_point(j,k-1);
                 u_j_k_n = prev_u.get_point(j,k); // now we have all the points from prev_u
-                u_j_k_n1 = u_j_k_n + courant_factor1*(u_j1_k_n -2*u_j_k_n + u_j_k1_n) + courant_factor2*(u_j_1_k_n + u_j_k_1_n - 2*u_j_k_n);
+                u_j_k_n1 = u_j_k_n + courant_factor1*(u_j1_k_n -2*u_j_k_n + u_j_1_k_n) + courant_factor2*(u_j_k1_n + u_j_k_1_n - 2*u_j_k_n);
                 next_u.set_point(j,k, u_j_k_n1);
             }
         }
     }
 }
-void timeloop(Stencil& stencil){
+void timeloop(){
 
-    // implements a timeloop for each initial condition stencil
-    Grid A, B;
+    Grid A(9, 11, 1, 1);
     // these two are going to be switiching back and forth
+    Set_initial(2, A);
+    Grid B = A;
 
     bool A_next = true; // this boolean is going to determine whether A or B is going to store the next moment in time
     // working with default initial conditions dx, dy, dt, tmax
@@ -236,17 +219,14 @@ void timeloop(Stencil& stencil){
     // Now let's begin looping through time
     for(double time = 0.0; time<maximum_time_in_seconds; time+=dt){
         if(time==0.0){
-            // set the initial conditions up
-            A = stencil.get_values(); // one time allocations of memeory
-            B = A;
             A_next = !A_next; // flip the boolean
         } else {
             if(A_next){
                 // A is next up --> next_u = A; prev_u = B;
-                Heat2D_next_u(A, B, stencil, alpha, dt);
+                Heat2D_next_u(A, B, alpha, dt);
             } else{
                 // B is next up --> next_u = B; prev_u = A;
-                Heat2D_next_u(B, A, stencil, alpha, dt);
+                Heat2D_next_u(B, A, alpha, dt);
             }
             if(time == transform*dt){ // debugging purposes
                 cout << time << endl;
@@ -276,8 +256,7 @@ int main(){
      //stenc.stencil_print();
     // call the timeloop
     //stenc.stencil_print();
-    Stencil stencil(2);
-    timeloop(stencil);
+    timeloop();
 
     // repeat the above for other initial conditions.
     return 0;
