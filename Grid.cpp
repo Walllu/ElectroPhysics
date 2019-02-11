@@ -109,6 +109,7 @@ void Set_initial (int num, Grid& grid){
                     }
                 }
             }
+
             else if(num==2){
                 for(int i=0; i<grid.get_x_dim(); i++){
                     for(int j=0; j<grid.get_y_dim(); j++){
@@ -126,6 +127,54 @@ void Set_initial (int num, Grid& grid){
                             //B[i][j]=0; // mark as variable
                             grid.set_point(i,j,0);
                             //constant_locations.set_point(i,j,0);
+                        }
+                    }
+                }
+            }
+
+            // num 3 is for two cylinders case
+            else if(num==3){
+                double x, y;
+                for(int i=0; i<grid.get_x_dim(); i++){
+                    x = grid.get_x_position(i) - grid.get_x_dist()/2.0;
+                    cout << x << endl;
+                    for(int j=0; j<grid.get_y_dim(); j++){
+                        y = grid.get_y_position(j) - grid.get_y_dist()/2.0;
+                        if( x*x + y*y >= pow(grid.get_x_dist()/2.0, 2)) {
+                            grid.set_constant(i,j);
+                            grid.set_point(i, j, 10);
+                        } else if(x*x + y*y <= pow(grid.get_x_dist()/5.0, 2)){
+                            grid.set_point(i,j,0);
+                            grid.set_constant(i,j);
+                        }
+                        else{
+                            grid.set_point(i,j,0);
+                        }
+                    }
+                }
+            }
+
+            //number 4 for cylinder and plates
+            else if(num==4){
+                double x, y;
+                for(int i=0; i<grid.get_x_dim(); i++){
+                    x = grid.get_x_position(i) - grid.get_x_dist()/2.0;
+                    for(int j=0; j<grid.get_y_dim(); j++){
+                        y = grid.get_y_position(j) - grid.get_y_dist()/2.0;
+                        if( j == 0 ) {
+                            grid.set_constant(i,j);
+                            grid.set_point(i, j, 10);
+                        }
+                        else if( j == grid.get_y_dim()-1) {
+                            grid.set_constant(i,j);
+                            grid.set_point(i, j, -10);
+                        }
+                        else if(x*x + y*y <= pow(grid.get_x_dist()/5.0, 2)){
+                            grid.set_point(i,j,0);
+                            grid.set_constant(i,j);
+                        }
+                        else{
+                            grid.set_point(i,j,0);
                         }
                     }
                 }
@@ -199,9 +248,9 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, const double alpha, float dt){
 }
 void timeloop(){
 
-    Grid A(9, 11, 1, 1);
+    Grid A(11, 11, 1, 1);
     // these two are going to be switiching back and forth
-    Set_initial(2, A);
+    Set_initial(4, A);
     Grid B = A;
 
     bool A_next = true; // this boolean is going to determine whether A or B is going to store the next moment in time
