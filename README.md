@@ -9,4 +9,4 @@ We still need to create:
  * General initial condition solver
  * Plotting
 
-<a href="" rel="">a</a>
+<a href="https://example.com" rel="dofollow">a</a>
