@@ -6,12 +6,15 @@ using namespace std;
 // a helper class that defines the grid and grid spacing
 class Grid{
     private:
-        int x_dim, y_dim; //  number of nodes in x, y direction, (x, y index goes from 0 to x_dim - 1, y_dim - 1)
+        int x_dim, y_dim; //  number of nodes in x, y direction, (x, y index goes from 0 to x_dim - 1)
+        float x_phys, y_phys; //
         float dx, dy;   // grid spacing in each x,y direction
         vector<vector <double> > grid; // the actual grid of some dimension
     public:
-        Grid() : x_dim(11), y_dim(11), dx(0.2), dy(0.2) {
+        Grid() : x_dim(13), y_dim(13), x_phys(1), y_phys(1) {
             // default configuration
+            dx = x_phys/x_dim;
+            dy = y_phys/y_dim;
             vector<double> y_axis(y_dim); // construct the grid of zeros
             vector< vector<double> > x_axis;
             for(int i=0;i<x_dim;i++){
@@ -19,15 +22,15 @@ class Grid{
             }
             grid = x_axis; // default 0's matrix
         }
-        Grid(int x_dim_arg, int y_dim_arg, float x_phys, float y_phys): x_dim(x_dim_arg), y_dim(y_dim_arg) {
+        Grid(int x_dim_arg, int y_dim_arg, float x_phys_arg, float y_phys_arg): x_dim(x_dim_arg), y_dim(y_dim_arg), x_phys(x_phys_arg), y_phys(y_phys_arg) {
             // this is a more flexible default starter grid of zeros
             // just define the x,y array size and physical depth of each
             // and we set dx, dy here based on physical_length/grid_spaces
-            dx = x_phys/(x_dim - 1);
-            dy = y_phys/(y_dim - 1);
+            dx = x_phys/(x_dim-1);
+            dy = y_phys/(y_dim-1);
             vector <double> y_axis(y_dim); // construct the grid of zeros
             vector < vector<double> > x_axis;
-            for(int i=0; i<x_dim; i++){
+            for(int i= 0; i<x_dim; i++){
                 x_axis.push_back(y_axis);
             }
             grid = x_axis; // default 0's matrix
@@ -44,11 +47,11 @@ class Grid{
         float get_dy(){
             return dy; // getter for dy space-step
         }
-        float get_x_dist(int i){
-            return i*dx;
+        float get_x_position(int i){
+            return i*dx - x_phys/2.0;
         }
-        float get_y_dist(int i){
-            return i*dy;
+        float get_y_position(int i){
+            return i*dy - y_phys/2.0;
         }
         void set_point(int i,int j, double val){
             grid[i][j] = val; // sets a point in the grid to "val"
@@ -59,8 +62,8 @@ class Grid{
             // i refers to the y position, j to the x position
         }
         void grid_print(){  // method for printing the whole grid
-            for(int i=0; i<x_dim; i++){
-                for(int j=0; j<y_dim; j++){
+            for(int i= 0; i<x_dim; i++){
+                for(int j= 0; j<y_dim; j++){
                     cout << "(" << grid[i][j] << ")";
                 }
                 cout << endl;
@@ -77,18 +80,44 @@ class Stencil{
     public:
         Stencil(int num){ // we make a constructor that acts differently depending on which input you start with
             if(num==1){
+                int p = 13;
+                int r = 13;
+                float m = 1.0;
+                float n = 1.0;
                 //create problem 1, I'll just do hot walls)
-                Grid intitial_values, constant_locations;
-                for(int i=0; i<intitial_values.get_x_dim(); i++){
-                    for(int j=0; j<intitial_values.get_y_dim(); j++){
-                        if(i==0||j==0||i==intitial_values.get_y_dim()-1||j==intitial_values.get_x_dim()-1){
-                            //A[i][j]=20; // location and value of point
-                            //B[i][j]=1; // mark as constant
+                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
+                for(int i = 0; i < initial_values.get_x_dim(); i++){
+                    for(int j= 0 ; j < initial_values.get_y_dim(); j++){
+                        if(i==initial_values.get_x_dim()-1||j==initial_values.get_y_dim()-1||i== 0||j== 0){
+
+                            initial_values.set_point(i,j,20);
+                            constant_locations.set_point(i,j,1);
+                        } else{
+
+                            initial_values.set_point(i,j,0);
+                            constant_locations.set_point(i,j,0);
+                        }
+                    }
+                }
+                problem_values = initial_values;
+                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
+                // end of problem 1
+            }
+            else if(num==2){
+                int p = 13;
+                int r = 13;
+                float m = 1.0;
+                float n = 1.0;
+                //create problem 1, I'll just do hot walls)
+                Grid intitial_values(p, r, m, n), constant_locations(p, r, m, n);
+                for(int i = 0; i < intitial_values.get_x_dim(); i++){
+                    for(int j=0; j < intitial_values.get_y_dim(); j++){
+                        if(j==intitial_values.get_y_dim()-1||j== 0){
+
                             intitial_values.set_point(i,j,20);
                             constant_locations.set_point(i,j,1);
                         } else{
-                            //A[i][j]=0;  //location and value of point
-                            //B[i][j]=0; // mark as variable
+
                             intitial_values.set_point(i,j,0);
                             constant_locations.set_point(i,j,0);
                         }
@@ -98,32 +127,87 @@ class Stencil{
                 problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
                 // end of problem 1
             }
-            else if(num==2){
-                Grid initial_values, constant_locations;
-                for(int i=0; i<initial_values.get_x_dim(); i++){
-                    for(int j=0; j<initial_values.get_y_dim(); j++){
-                        if(j==0){
-                            //A[i][j]=20; // location and value of point
-                            //B[i][j]=1; // mark as constant
+            else if(num==3){
+                int p = 13;
+                int r = 13;
+                float m = 1.0;
+                float n = 1.0;
+                //create problem 1, I'll just do hot walls)
+                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
+                float x, y;
+                float a, b;
+                a = 0.5;
+                b = 0.2;
+                for(int i = 0; i < initial_values.get_x_dim(); i++){
+                    x = initial_values.get_x_position(i);
+                    for(int j= 0; j < initial_values.get_y_dim(); j++){
+                        y = initial_values.get_y_position(j);
+                        if(x*x + y*y >= a*a){
+
                             initial_values.set_point(i,j,20);
                             constant_locations.set_point(i,j,1);
-                        } else if(j==initial_values.get_y_dim()-1){
-                            initial_values.set_point(i,j,-20);
+                        }
+                        else if(x*x + y*y <= b*b){
+
+                            initial_values.set_point(i,j,0);
                             constant_locations.set_point(i,j,1);
                         }
                         else{
-                            //A[i][j]=0;  //location and value of point
-                            //B[i][j]=0; // mark as variable
+
                             initial_values.set_point(i,j,0);
-                            //constant_locations.set_point(i,j,0);
+                            constant_locations.set_point(i,j,0);
                         }
                     }
                 }
                 problem_values = initial_values;
                 problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
                 // end of problem 1
-
             }
+            else if(num==4){
+                int p = 13;
+                int r = 13;
+                float m = 1.0;
+                float n = 1.0;
+                //create problem 1, I'll just do hot walls)
+                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
+                float x, y;
+                float a, b;
+                a = 1;
+                b = 0.2;
+                for(int i = 0; i < initial_values.get_x_dim()-1; i++){
+                    x = initial_values.get_x_position(i);
+                    for(int j= 0; j < initial_values.get_y_dim(); j++){
+                        y = initial_values.get_y_position(j);
+                        if(j = 0){
+
+                            initial_values.set_point(i,j,20);
+                            constant_locations.set_point(i,j,1);
+                        }
+                        if(j = initial_values.get_y_dim()-1){
+
+                            initial_values.set_point(i,j,-20);
+                            constant_locations.set_point(i,j,1);
+                        }
+                        else if(x*x + y*y <= b*b){
+
+                            initial_values.set_point(i,j,0);
+                            constant_locations.set_point(i,j,1);
+                        }
+                        else{
+
+                            initial_values.set_point(i,j,0);
+                            constant_locations.set_point(i,j,0);
+                        }
+                    }
+                }
+                problem_values = initial_values;
+                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
+                // end of problem 1
+            }
+
+
+
+
         }
         void stencil_print(){
             for(int i=0;i<problem_values.get_x_dim(); i++){
@@ -160,13 +244,13 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
     double courant_factor1 = 2.0*alpha*(dt/pow(dx,2));
     double courant_factor2 = 2.0*alpha*(dt/pow(dy,2));
     for(int j=0;j<x_ext;j++){
-        for(int k=0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
+        for(int k= 0;k<y_ext;k++){ // gonna switch over to "k" for my conventience - it's just an index
             // check if the point is constant
             if(stencil.is_it_constant(j,k)){
                 // if it is constant, we want to ignore it.
                 continue; // Move onto next iteration
                 //next_u.set_point(j,k,stencil.get_value_at_point(j,k)); // sets the value as constant value from stencil
-            } else if(j==0||k==0||j==x_ext-1||k==y_ext-1){
+            } else if(j==0||k== 0||j==x_ext-1||k==y_ext-1){
                 // if we have an edge case that is not constant
                 double u_j1_k_n,  u_j_k1_n, u_j_1_k_n, u_j_k_1_n, u_j_k_n, u_j_k_n1;
                 int k_1, j_1, k1, j1;
@@ -176,14 +260,14 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
                 j1 = j + 1;
                 // if j=0, then a decrease in k is bad
                 if(j==0){
-                    j_1 = x_ext - 1;
+                    j_1 = x_ext-1;
                 }
                 // if k=0, then a decrease in j is bad
-                if(k==0){
-                    k_1 = y_ext - 1;
+                if(k == 0){
+                    k_1 = y_ext-1;
                 }
                 // if j==x_ext-1 then an increase in k is bad
-                if(j==x_ext-1){
+                if(j==x_ext - 1){
                     j1 = 0;
                 }
                 // if k--y_ext-1 then an increase in j is bad
@@ -218,6 +302,12 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
 void timeloop(Stencil& stencil){
 
     // implements a timeloop for each initial condition stencil
+    /*int p, r;
+    p = 11;
+    r = 11;
+    float m, n;
+    m = 1;
+    n = 1;*/
     Grid A, B;
     // these two are going to be switiching back and forth
 
@@ -276,7 +366,8 @@ int main(){
      //stenc.stencil_print();
     // call the timeloop
     //stenc.stencil_print();
-    Stencil stencil(2);
+    Stencil stencil(3);
+    stencil.stencil_print();
     timeloop(stencil);
 
     // repeat the above for other initial conditions.

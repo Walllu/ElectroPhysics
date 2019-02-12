@@ -144,7 +144,7 @@ void Set_initial (int num, Grid& grid){
                             grid.set_constant(i,j);
                             grid.set_point(i, j, 10);
                         } else if(x*x + y*y <= pow(grid.get_x_dist()/5.0, 2)){
-                            grid.set_point(i,j,0);
+                            grid.set_point(i,j,5);
                             grid.set_constant(i,j);
                         }
                         else{
@@ -250,7 +250,7 @@ void timeloop(){
 
     Grid A(11, 11, 1, 1);
     // these two are going to be switiching back and forth
-    Set_initial(4, A);
+    Set_initial(3, A);
     Grid B = A;
 
     bool A_next = true; // this boolean is going to determine whether A or B is going to store the next moment in time
