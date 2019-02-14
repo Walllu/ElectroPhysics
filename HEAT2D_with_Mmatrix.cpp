@@ -47,7 +47,7 @@ class Grid{
             return dy; // getter for dy space-step
         }
         void set_point(int i,int j, double val){
-	  grid[i][j] = val; // sets a point in the grid to "val"
+	        grid[i][j] = val; // sets a point in the grid to "val"
         }
         double get_point(int i,int j){
             return grid[i][j]; // getter for value of point in grid
@@ -61,64 +61,115 @@ class Grid{
             }
         }
 
-  int Mmatrix(){
-    int Mdim = x_dim*x_dim; //The M matrix has 1 row element for every grid point
-    vector<int> Mrow(Mdim);
-    vector< vector<int> > Mcolumn(Mdim);
-    for(int i = 0; i < Mdim; i++) {
-      Mcolumn.push_back(Mrow);   //Initialising with zeros the M matrix here
-    }//I think i fucked this up. I want a xdim^2 x xdim^2 matrix filled with zeroes.
-    vector<vector<int>> M_matrix; //If I havent done this right, or you think that there is a better
-    M_matrix = Mcolumn;           //way to do it, please change and message commit.
-    
-    for(int i=0;i<x_dim; i++){ //Stole this to see matrix size
-       for(int j=0;j<y_dim; j++){
-           cout << "(" << M_matrix[i][j] << ")";
-           }
-       cout << endl;
-     }
-  
-  int position = 0;
-  for (int i = 1; i <= x_dim; i++) { //iterating over the grid, not the M Matrix
-    for (int j = 1; j <= x_dim; j++) { //This is because we fill our matrix depending on grid position
-      if (i == 1) { //Case for 1st row of grid
-	if (j == 1) { //Top-left grid point
-	  M_matrix[j-1][j-1] = -4;
-	    M_matrix[j-1][j] = 1;
-	    M_matrix[j-1][j+x_dim] = 1;
-	}
-	if (j == x_dim) { //Top-right grid point
-	  M_matrix[j-1][x_dim-1] = 1;
-	  M_matrix[j-1][x_dim] = -4;
-	  M_matrix[j-1][2*x_dim] = 1;
-	}
-	else { //Middle grid points in top row
-	  for (int k = 1; k <= x_dim; k++) {
-	    M_matrix[j-1][position] = 1;
-	    M_matrix[j-1][position+1] = -4;
-	    M_matrix[j-1][position+2] = 1;
-	    M_matrix[j-1][position+5] = 1;
-	    position++;
-	  }
-	  //so far only 1st row of matrix filling written. there will also be a special
-	  //case for the last row of grid also. hopefully all intermediate rows will be
-	  //general as expected. There are 3 types of points in the grid. a left
-	  //point: found on leftmost column of grid. a right point: found on rightmost
-	  //column of grid, and a middlepoint: found anywhere between these two columns.
-	  //Depending on which one of these, the matrix is filled accordingly.
-	  //Getting segmentation fault when A.Mmatrix is called.
-	}
-      }
-    }
-  }
+        int Mmatrix(){
+            int Mdim = x_dim*y_dim; //The M matrix has 1 row element for every grid point
+            vector<int> Mrow(Mdim);
+            vector< vector<int> > Mcolumn(Mdim);
+            // now that we've defined the new grid
+            for(int i = 0; i < Mdim; i++) {
+                Mcolumn.push_back(Mrow);   //Initialising with zeros the M matrix here
+            }//I think i fucked this up. I want a xdim^2 x xdim^2 matrix filled with zeroes.
+            vector<vector<int>> M_matrix; //If I havent done this right, or you think that there is a better
+            M_matrix = Mcolumn;           //way to do it, please change and message commit.
+            for(int i=0;i<x_dim; i++){ //Stole this to see matrix size
+                for(int j=0;j<y_dim; j++){
+                    cout << "(" << M_matrix[i][j] << ")";
+                }
+                cout << endl;
+            }
+            int position = 0;
+            for (int i = 1; i <= x_dim; i++) { //iterating over the grid, not the M Matrix
+                for (int j = 1; j <= x_dim; j++) { //This is because we fill our matrix depending on grid position
+                    if (i == 1) { //Case for 1st row of grid
+                        if (j == 1) { //Top-left grid point
+                            M_matrix[j-1][j-1] = -4;
+                            M_matrix[j-1][j] = 1;
+                            M_matrix[j-1][j+x_dim] = 1;
+                        }
+                        else if (j == x_dim) { //Top-right grid point
+                            M_matrix[j-1][x_dim-1] = 1;
+                            M_matrix[j-1][x_dim] = -4;
+                            M_matrix[j-1][2*x_dim] = 1;
+                        }
+                        else { //Middle grid points in top row
+                            for (int k = 1; k <= x_dim; k++) {
+                                M_matrix[j-1][position] = 1;
+                                M_matrix[j-1][position+1] = -4;
+                                M_matrix[j-1][position+2] = 1;
+                                M_matrix[j-1][position+5] = 1;
+                                position++;
+                            }
+                            //so far only 1st row of matrix filling written. there will also be a special
+                            //case for the last row of grid also. hopefully all intermediate rows will be
+                            //general as expected. There are 3 types of points in the grid. a left
+                            //point: found on leftmost column of grid. a right point: found on rightmost
+                            //column of grid, and a middlepoint: found anywhere between these two columns.
+                            //Depending on which one of these, the matrix is filled accordingly.
+                            //Getting segmentation fault when A.Mmatrix is called.
+                        }
+                    }
+                }
+            }
+        }
 
-			       
-  
-  }
 
-    
-  
 };
+
+// a new class extending the Grid class - it's a "special" grid
+// which will solely be used for making the 'M' matrix - i.e. a specific type of Grid
+// I implemented two constructors, one that makes it from a Stencil and one that makes it from a Grid
+// the reason I did this is so we can 
+class MMatrix: public Grid {
+    public:
+        // This constructor works specifically to create an 'M' matrix specifically from a Grid
+        // just call this constructor (inputting a Grid) and it will work
+        MMatrix(Grid& grid_to_construct_from): x_phys(1), y_phys(1){
+            x_dim = pow(grid_to_construct_from.get_x_dim(),2); // set x_dim of 'M' matrix
+            y_dim = pow(grid_to_construct_from.get_y_dim(),2); // set y_dim of 'M' matrix - could be different in general
+            int M_dim = x_dim*y_dim; // helper variable for generating grid
+            vector< vector<int> > Mcolumns(M_dim); // now let's create this thing...
+            // for each grid point in the original we want to make a new 'M' matrix row
+            for(int current_point = 0; current_point < M_dim; current_point++){
+                vector<int> Mrow(M_dim);
+                Mrow[current_point] = -4; // this will always occur
+                // if point is in first row or column, or in the last row or column...
+                // basically, let's take care of the edge cases if they occur at all
+                if(current_point < x_dim){
+                    // current point is in first row
+                    Mrow[current_point + x_dim] = 1; // below
+                    if(current_point % x_dim == 0){
+                        // do something if in first column in first row
+                        Mrow[current_point + 1] = 1;
+                    } else if(current_point == x_dim - 1){
+                        // do something if in last column in first row
+                        Mrow[current_point - 1] = 1;
+                    }
+                } else if(current_point >= (y_dim-1)*x_dim){
+                    // current point is in last row
+                    Mrow[current_point - x_dim] = 1; // above
+                    if(current_point % x_dim == 0){
+                        // do something if in first column in last row
+                        Mrow[current_point + 1] = 1;
+                    } else if(current_point % x_dim == x_dim - 1){
+                        // do something if in last column in last row
+                        Mrow[current_point - 1] = 1;
+                    }
+                }
+                else {
+                    // if the points are not edge cases (first/last row/column) then just do the standard things
+                    Mrow[current_point + x_dim] = 1; // below
+                    Mrow[current_point - x_dim] = 1; // above
+                    Mrow[current_point + 1] = 1; // right
+                    Mrow[current_point - 1] = 1; // left
+                }
+                // now that we've constructed the row (corresponding to one grid point!) we push to columns stack
+                Mcolumns.push_back(Mrow);
+            }
+        // now we've completed the 'M' matrix, let the grid be this matrix
+        grid = Mcolumns;
+        }
+}
+
 // class for making the initial value stencils for problems
 class Stencil{
     private:
