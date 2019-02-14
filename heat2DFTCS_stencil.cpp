@@ -5,7 +5,7 @@ using namespace std;
 
 // a helper class that defines the grid and grid spacing
 class Grid{
-    private:
+    protected:
         int x_dim, y_dim; //  number of nodes in x, y direction, (x, y index goes from 0 to x_dim - 1)
         float x_phys, y_phys; //
         float dx, dy;   // grid spacing in each x,y direction
@@ -70,6 +70,59 @@ class Grid{
             }
         }
 };
+
+class MMatrix: public Grid {
+    public:
+        // This constructor works specifically to create an 'M' matrix specifically from a Grid
+        // just call this constructor (inputting a Grid) and it will work
+        MMatrix(Grid grid_to_construct_from){
+            x_dim = pow(grid_to_construct_from.get_x_dim(),2); // set x_dim of 'M' matrix
+            y_dim = pow(grid_to_construct_from.get_y_dim(),2); // set y_dim of 'M' matrix - could be different in general
+            int M_dim = x_dim*y_dim; // helper variable for generating grid
+            vector< vector<double> > Mcolumns(M_dim); // now let's create this thing...
+            // for each grid point in the original we want to make a new 'M' matrix row
+            for(int current_point = 0; current_point < M_dim; current_point++){
+                vector<double> Mrow(M_dim);
+                cout << current_point << endl;
+                Mrow[current_point] = -4; // this will always occur
+                // if point is in first row or column, or in the last row or column...
+                // basically, let's take care of the edge cases if they occur at all
+                if(current_point < x_dim){
+                    // current point is in first row
+                    Mrow[current_point + x_dim] = 1; // below
+                    if(current_point % x_dim == 0){
+                        // do something if in first column in first row
+                        Mrow[current_point + 1] = 1;
+                    } else if(current_point == x_dim - 1){
+                        // do something if in last column in first row
+                        Mrow[current_point - 1] = 1;
+                    }
+                } else if(current_point >= (y_dim-1)*x_dim){
+                    // current point is in last row
+                    Mrow[current_point - x_dim] = 1; // above
+                    if(current_point % x_dim == 0){
+                        // do something if in first column in last row
+                        Mrow[current_point + 1] = 1;
+                    } else if(current_point % x_dim == x_dim - 1){
+                        // do something if in last column in last row
+                        Mrow[current_point - 1] = 1;
+                    }
+                }
+                else {
+                    // if the points are not edge cases (first/last row/column) then just do the standard things
+                    Mrow[current_point + x_dim] = 1; // below
+                    Mrow[current_point - x_dim] = 1; // above
+                    Mrow[current_point + 1] = 1; // right
+                    Mrow[current_point - 1] = 1; // left
+                }
+                // now that we've constructed the row (corresponding to one grid point!) we push to columns stack
+                Mcolumns.push_back(Mrow);
+            }
+            // now we've completed the 'M' matrix, let the grid be this matrix
+            grid = Mcolumns;
+        }
+};
+
 // class for making the initial value stencils for problems
 class Stencil{
     private:
@@ -369,7 +422,10 @@ int main(){
     Stencil stencil(3);
     stencil.stencil_print();
     timeloop(stencil);
-
+    cout << "let's make the matrix from grid" << endl;
+    MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
+    cout << "time to print matrix" << endl;
+    //matrix.grid_print(); // this line currently crashes your computer, don't run!
     // repeat the above for other initial conditions.
     return 0;
 }

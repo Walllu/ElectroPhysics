@@ -60,7 +60,7 @@ class Grid{
                 cout << endl;
             }
         }
-
+/*
         int Mmatrix(){
             int Mdim = x_dim*y_dim; //The M matrix has 1 row element for every grid point
             vector<int> Mrow(Mdim);
@@ -111,14 +111,13 @@ class Grid{
                 }
             }
         }
-
+*/
 
 };
 
 // a new class extending the Grid class - it's a "special" grid
 // which will solely be used for making the 'M' matrix - i.e. a specific type of Grid
-// I implemented two constructors, one that makes it from a Stencil and one that makes it from a Grid
-// the reason I did this is so we can 
+// just use a grid of points to construct it (like on paper) as it constains all the dimensional information needed to make 'M'
 class MMatrix: public Grid {
     public:
         // This constructor works specifically to create an 'M' matrix specifically from a Grid
@@ -165,8 +164,8 @@ class MMatrix: public Grid {
                 // now that we've constructed the row (corresponding to one grid point!) we push to columns stack
                 Mcolumns.push_back(Mrow);
             }
-        // now we've completed the 'M' matrix, let the grid be this matrix
-        grid = Mcolumns;
+            // now we've completed the 'M' matrix, let the grid be this matrix
+            grid = Mcolumns;
         }
 }
 
