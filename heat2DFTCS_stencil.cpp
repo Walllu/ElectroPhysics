@@ -7,20 +7,21 @@ using namespace std;
 class Grid{
     protected:
         int x_dim, y_dim; //  number of nodes in x, y direction, (x, y index goes from 0 to x_dim - 1)
-        float x_phys, y_phys; //
+        float x_phys, y_phys; // physical x, y distances
         float dx, dy;   // grid spacing in each x,y direction
         vector<vector <double> > grid; // the actual grid of some dimension
     public:
-        Grid() : x_dim(13), y_dim(13), x_phys(1), y_phys(1) {
+        Grid() /*: x_dim(13), y_dim(13), x_phys(1), y_phys(1)*/ {
             // default configuration
-            dx = x_phys/x_dim;
+            /*dx = x_phys/x_dim;
             dy = y_phys/y_dim;
             vector<double> y_axis(y_dim); // construct the grid of zeros
             vector< vector<double> > x_axis;
             for(int i=0;i<x_dim;i++){
                 x_axis.push_back(y_axis);
             }
-            grid = x_axis; // default 0's matrix
+            grid = x_axis; // default 0's matrix*/
+
         }
         Grid(int x_dim_arg, int y_dim_arg, float x_phys_arg, float y_phys_arg): x_dim(x_dim_arg), y_dim(y_dim_arg), x_phys(x_phys_arg), y_phys(y_phys_arg) {
             // this is a more flexible default starter grid of zeros
@@ -71,55 +72,74 @@ class Grid{
         }
 };
 
-class MMatrix: public Grid {
+class MMatrix : public Grid{
     public:
         // This constructor works specifically to create an 'M' matrix specifically from a Grid
         // just call this constructor (inputting a Grid) and it will work
         MMatrix(Grid grid_to_construct_from){
-            x_dim = pow(grid_to_construct_from.get_x_dim(),2); // set x_dim of 'M' matrix
-            y_dim = pow(grid_to_construct_from.get_y_dim(),2); // set y_dim of 'M' matrix - could be different in general
+            x_dim = grid_to_construct_from.get_x_dim(); // set x_dim of 'M' matrix
+            y_dim = grid_to_construct_from.get_y_dim(); // set y_dim of 'M' matrix - could be different in general
             int M_dim = x_dim*y_dim; // helper variable for generating grid
-            vector< vector<double> > Mcolumns(M_dim); // now let's create this thing...
+            vector< vector<double> > Mcolumn; // now let's create this thing...
             // for each grid point in the original we want to make a new 'M' matrix row
             for(int current_point = 0; current_point < M_dim; current_point++){
                 vector<double> Mrow(M_dim);
-                cout << current_point << endl;
                 Mrow[current_point] = -4; // this will always occur
                 // if point is in first row or column, or in the last row or column...
                 // basically, let's take care of the edge cases if they occur at all
                 if(current_point < x_dim){
-                    // current point is in first row
+                    // current point is in first column
                     Mrow[current_point + x_dim] = 1; // below
-                    if(current_point % x_dim == 0){
-                        // do something if in first column in first row
+                    if (current_point==0){
                         Mrow[current_point + 1] = 1;
-                    } else if(current_point == x_dim - 1){
-                        // do something if in last column in first row
+                    }
+                    else if (current_point== x_dim-1){
                         Mrow[current_point - 1] = 1;
                     }
-                } else if(current_point >= (y_dim-1)*x_dim){
-                    // current point is in last row
-                    Mrow[current_point - x_dim] = 1; // above
-                    if(current_point % x_dim == 0){
-                        // do something if in first column in last row
+                    else{
                         Mrow[current_point + 1] = 1;
-                    } else if(current_point % x_dim == x_dim - 1){
-                        // do something if in last column in last row
                         Mrow[current_point - 1] = 1;
                     }
                 }
-                else {
-                    // if the points are not edge cases (first/last row/column) then just do the standard things
+                else if(current_point >= M_dim - x_dim) {
+                    // current point is in last column
+                    Mrow[current_point - x_dim] = 1; // above
+                    if (current_point==M_dim - x_dim){
+                        Mrow[current_point + 1] = 1;
+                    }
+                    else if (current_point== M_dim-1){
+                        Mrow[current_point - 1] = 1;
+                    }
+                    else{
+                        Mrow[current_point + 1] = 1;
+                        Mrow[current_point - 1] = 1;
+                    }
+                }
+                else if (current_point % x_dim == 0 || current_point % x_dim == x_dim - 1){
+                    Mrow[current_point + x_dim] = 1; // below
+                    Mrow[current_point - x_dim] = 1; // above
+                    if(current_point % x_dim == 0){
+                    // do something if in first column in last row
+                        Mrow[current_point + 1] = 1;
+                    }
+                    else {
+                        Mrow[current_point - 1] = 1;
+                    }
+
+                }
+                else{
                     Mrow[current_point + x_dim] = 1; // below
                     Mrow[current_point - x_dim] = 1; // above
                     Mrow[current_point + 1] = 1; // right
                     Mrow[current_point - 1] = 1; // left
                 }
                 // now that we've constructed the row (corresponding to one grid point!) we push to columns stack
-                Mcolumns.push_back(Mrow);
-            }
+                Mcolumn.push_back(Mrow);
+            };
             // now we've completed the 'M' matrix, let the grid be this matrix
-            grid = Mcolumns;
+            grid = Mcolumn;
+            x_dim = M_dim;
+            y_dim = M_dim;
         }
 };
 
@@ -132,13 +152,13 @@ class Stencil{
         // problem_constant_locations has the locations of all constant values in the grid
     public:
         Stencil(int num){ // we make a constructor that acts differently depending on which input you start with
+            cout << "Input number of x, y dimensions and x, y distances" << endl;
+            int x_dim, y_dim;
+            float x_phys, y_phys;
+            cin >> x_dim >> y_dim >> x_phys >> y_phys ;
+            Grid initial_values(x_dim, y_dim, x_phys, y_phys), constant_locations(x_dim, y_dim, x_phys, y_phys);
             if(num==1){
-                int p = 13;
-                int r = 13;
-                float m = 1.0;
-                float n = 1.0;
                 //create problem 1, I'll just do hot walls)
-                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
                 for(int i = 0; i < initial_values.get_x_dim(); i++){
                     for(int j= 0 ; j < initial_values.get_y_dim(); j++){
                         if(i==initial_values.get_x_dim()-1||j==initial_values.get_y_dim()-1||i== 0||j== 0){
@@ -152,55 +172,42 @@ class Stencil{
                         }
                     }
                 }
-                problem_values = initial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
             }
             else if(num==2){
-                int p = 13;
-                int r = 13;
-                float m = 1.0;
-                float n = 1.0;
-                //create problem 1, I'll just do hot walls)
-                Grid intitial_values(p, r, m, n), constant_locations(p, r, m, n);
-                for(int i = 0; i < intitial_values.get_x_dim(); i++){
-                    for(int j=0; j < intitial_values.get_y_dim(); j++){
-                        if(j==intitial_values.get_y_dim()-1||j== 0){
 
-                            intitial_values.set_point(i,j,20);
+                //create problem 1, I'll just do hot walls)
+
+                for(int i = 0; i < initial_values.get_x_dim(); i++){
+                    for(int j=0; j < initial_values.get_y_dim(); j++){
+                        if(j==initial_values.get_y_dim()-1||j== 0){
+
+                            initial_values.set_point(i,j,20);
                             constant_locations.set_point(i,j,1);
                         } else{
 
-                            intitial_values.set_point(i,j,0);
+                            initial_values.set_point(i,j,0);
                             constant_locations.set_point(i,j,0);
                         }
                     }
                 }
-                problem_values = intitial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
             }
             else if(num==3){
-                int p = 13;
-                int r = 13;
-                float m = 1.0;
-                float n = 1.0;
-                //create problem 1, I'll just do hot walls)
-                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
+
+                //create problem 3, two cylinders)
                 float x, y;
-                float a, b;
-                a = 0.5;
-                b = 0.2;
+                float out_r, inn_r;
+                out_r = 0.5;
+                inn_r = 0.2;
                 for(int i = 0; i < initial_values.get_x_dim(); i++){
                     x = initial_values.get_x_position(i);
                     for(int j= 0; j < initial_values.get_y_dim(); j++){
                         y = initial_values.get_y_position(j);
-                        if(x*x + y*y >= a*a){
+                        if(x*x + y*y >= out_r*out_r){
 
                             initial_values.set_point(i,j,20);
                             constant_locations.set_point(i,j,1);
                         }
-                        else if(x*x + y*y <= b*b){
+                        else if(x*x + y*y <= inn_r*inn_r){
 
                             initial_values.set_point(i,j,0);
                             constant_locations.set_point(i,j,1);
@@ -212,21 +219,14 @@ class Stencil{
                         }
                     }
                 }
-                problem_values = initial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
+
             }
             else if(num==4){
-                int p = 13;
-                int r = 13;
-                float m = 1.0;
-                float n = 1.0;
-                //create problem 1, I'll just do hot walls)
-                Grid initial_values(p, r, m, n), constant_locations(p, r, m, n);
+                //create problem 4, cylinder between walls)
                 float x, y;
-                float a, b;
-                a = 1;
-                b = 0.2;
+                float out_r, inn_r;
+                out_r = 0.5;
+                inn_r = 0.2;
                 for(int i = 0; i < initial_values.get_x_dim()-1; i++){
                     x = initial_values.get_x_position(i);
                     for(int j= 0; j < initial_values.get_y_dim(); j++){
@@ -241,7 +241,7 @@ class Stencil{
                             initial_values.set_point(i,j,-20);
                             constant_locations.set_point(i,j,1);
                         }
-                        else if(x*x + y*y <= b*b){
+                        else if(x*x + y*y <= inn_r*inn_r){
 
                             initial_values.set_point(i,j,0);
                             constant_locations.set_point(i,j,1);
@@ -253,12 +253,10 @@ class Stencil{
                         }
                     }
                 }
-                problem_values = initial_values;
-                problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
-                // end of problem 1
             }
-
-
+            problem_values = initial_values;
+            problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
+                // end of problem 1
 
 
         }
@@ -354,13 +352,7 @@ void Heat2D_next_u(Grid& next_u, Grid& prev_u, Stencil& stencil, const double al
 }
 void timeloop(Stencil& stencil){
 
-    // implements a timeloop for each initial condition stencil
-    /*int p, r;
-    p = 11;
-    r = 11;
-    float m, n;
-    m = 1;
-    n = 1;*/
+
     Grid A, B;
     // these two are going to be switiching back and forth
 
@@ -425,7 +417,7 @@ int main(){
     cout << "let's make the matrix from grid" << endl;
     MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
     cout << "time to print matrix" << endl;
-    //matrix.grid_print(); // this line currently crashes your computer, don't run!
+    matrix.grid_print(); // this line currently crashes your computer, don't run!
     // repeat the above for other initial conditions.
     return 0;
 }
