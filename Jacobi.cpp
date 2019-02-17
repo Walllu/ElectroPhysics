@@ -3,7 +3,6 @@
 #include <cmath>
 using namespace std;
 
-
 // a helper class that defines the grid and grid spacing
 class Grid {
 protected:
@@ -318,7 +317,7 @@ public:
 					make_vec_const[i + j * x_dim] = 1;
 				}
 				else {
-					make_vec_const[i + j * x_dim] = 1;
+					make_vec_const[i + j * x_dim] = 0;
 				}
 			}
 		}
@@ -500,6 +499,7 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	bool C_next = true;
 
 
+	//for (int t = 0; t < 2; t++) {
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
 		C_next = !C_next;
 		if (C_next) {
@@ -529,7 +529,7 @@ int main() {
 	//stenc.stencil_print();
 	// call the timeloop
 	//stenc.stencil_print();
-	Stencil stencil(1);
+	Stencil stencil(3);
 	stencil.stencil_print();
 	MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
 	timeloop(stencil, matrix);
