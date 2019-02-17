@@ -3,6 +3,7 @@
 #include <cmath>
 using namespace std;
 
+
 // a helper class that defines the grid and grid spacing
 class Grid {
 protected:
