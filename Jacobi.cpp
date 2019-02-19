@@ -80,6 +80,7 @@ class MMatrix : public Grid {
 			x_dim = grid_to_construct_from.get_x_dim(); // set x_dim of 'M' matrix
 			y_dim = grid_to_construct_from.get_y_dim(); // set y_dim of 'M' matrix - could be different in general
 			int M_dim = x_dim * y_dim; // helper variable for generating grid
+			cout << M_dim << endl;
 			vector< vector<double> > Mcolumn; // now let's create this thing...
 			// for each grid point in the original we want to make a new 'M' matrix row
 			for (int current_point = 0; current_point < M_dim; current_point++) {
@@ -90,10 +91,9 @@ class MMatrix : public Grid {
 				if (current_point < x_dim) {
 					// current point is in first row
 					Mrow[current_point + x_dim] = 1; // below
-					Mrow[M_dim - x_dim + current_point] = 1; //------------------------------ pacman - first row
+					Mrow[M_dim-x_dim + current_point] = 1; // --------------------------------- pacman - first row
 					if (current_point == 0) { // ----------------first row, first col
 						Mrow[current_point + 1] = 1;
-						//Mrow[M_dim+(x_dim-1)] = 1; // --------------------------------- pacman - first row
 						Mrow[x_dim-1] = 1; //------------------------------------------ pacman - first row
 					}
 					else if (current_point == x_dim - 1) { //----first row, last col
@@ -123,7 +123,6 @@ class MMatrix : public Grid {
 					else {
 						Mrow[current_point + 1] = 1;
 						Mrow[current_point - 1] = 1;
-						
 					}
 				}
 				else if (current_point % x_dim == 0 || current_point % x_dim == x_dim - 1) {
@@ -133,10 +132,11 @@ class MMatrix : public Grid {
 						// do something if in first column in last row
 						Mrow[current_point + x_dim - 1] = 1; //pacman
 						Mrow[current_point + 1] = 1;
+						Mrow[current_point + x_dim-1] = 1; //----------------------------------- pacman - first col
 					}
 					else {
 						Mrow[current_point - 1] = 1;
-						Mrow[current_point - x_dim + 1] = 1; //pacman
+						Mrow[current_point - x_dim+1] = 1; //----------------------------------- pacman - last col
 					}
 
 				}
@@ -444,11 +444,8 @@ int main() {
 	Stencil stencil(n);
 	stencil.stencil_print();
 	MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
-	//timeloop(stencil, matrix);
-	//cout << endl;
-	//cout << "let's make the matrix from grid" << endl;
-	//cout << "time to print matrix" << endl;
-	matrix.grid_print(); // this line currently crashes your computer, don't run!
+	//matrix.grid_print(); // this line currently crashes your computer, don't run!
+	timeloop(stencil, matrix);
 	// repeat the above for other initial conditions.
 	return 0;
 }
