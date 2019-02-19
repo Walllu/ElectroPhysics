@@ -88,31 +88,41 @@ class MMatrix : public Grid {
 				// if point is in first row or column, or in the last row or column...
 				// basically, let's take care of the edge cases if they occur at all
 				if (current_point < x_dim) {
-					// current point is in first column
+					// current point is in first row
 					Mrow[current_point + x_dim] = 1; // below
-					if (current_point == 0) {
+					if (current_point == 0) { // ----------------first row, first col
 						Mrow[current_point + 1] = 1;
+						Mrow[M_dim-(x_dim-1)] = 1; // --------------------------------- pacman - first row
+						Mrow[x_dim-1] = 1; //------------------------------------------ pacman - first row
 					}
-					else if (current_point == x_dim - 1) {
+					else if (current_point == x_dim - 1) { //----first row, last col
 						Mrow[current_point - 1] = 1;
+						Mrow[M_dim-1] = 1; // ----------------------------------------- pacman - first row
+						Mrow[0] = 1; //------------------------------------------------ pacman - first row
 					}
 					else {
 						Mrow[current_point + 1] = 1;
 						Mrow[current_point - 1] = 1;
+						Mrow[M_dim-current_point] = 1; //------------------------------ pacman - first row
 					}
 				}
 				else if (current_point >= M_dim - x_dim) {
-					// current point is in last column
+					// current point is in last row
 					Mrow[current_point - x_dim] = 1; // above
-					if (current_point == M_dim - x_dim) {
+					if (current_point == M_dim - x_dim) { //-------last row, first col
 						Mrow[current_point + 1] = 1;
+						Mrow[M_dim-1] = 1; //------------------------------------------------ pacman - last row
+						Mrow[0] = 1;//------------------------------------------------------ pacman - last row
 					}
-					else if (current_point == M_dim - 1) {
+					else if (current_point == M_dim - 1) {//-------last row, last col
 						Mrow[current_point - 1] = 1;
+						Mrow[M_dim-x_dim-1] = 1; //----------------------------------------- pacman - last row
+						Mrow[x_dim-1] = 1;//------------------------------------------------ pacman - last row
 					}
 					else {
 						Mrow[current_point + 1] = 1;
 						Mrow[current_point - 1] = 1;
+						Mrow[-(current_point - M_dim)] = 1;//------------------------------- pacman - last row
 					}
 				}
 				else if (current_point % x_dim == 0 || current_point % x_dim == x_dim - 1) {
@@ -180,9 +190,12 @@ class Stencil {
 
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
-						if (j == initial_values.get_y_dim() - 1 || j == 0) {
+						if (j == initial_values.get_y_dim() - 1) {
 
 							initial_values.set_point(i, j, 20);
+							constant_locations.set_point(i, j, 1);
+						} else if(j == 0){
+							initial_values.set_point(i, j, -20);
 							constant_locations.set_point(i, j, 1);
 						}
 						else {
@@ -326,6 +339,12 @@ class Linear {
 		float get_size() {
 			return size;
 		}
+		int get_x_dim(){
+			return x_dim;
+		}
+		int get_y_dim(){
+			return y_dim;
+		}
 		double get_value_linear(int i) {
 			return vec_potential[i];
 		}
@@ -355,7 +374,10 @@ class Linear {
 void next_Jacobi(Linear& prev, Linear& next, MMatrix& mat) {
 	double temp;
 	int size = prev.get_size();
+	int x_dim = prev.get_x_dim();
+	int y_dim = prev.get_y_dim();
 	for (int n = 0; n < size; n++) {
+		// if the current point is not constant...
 		if (!(prev.is_it_constant_linear(n))) {
 			temp = 0;
 			for (int m = 0; m < size; m++) {
@@ -413,13 +435,16 @@ int main() {
 	//stenc.stencil_print();
 	// call the timeloop
 	//stenc.stencil_print();
-	Stencil stencil(3);
+	int n;
+	cout << "Which situation do you want to see? 1, 2, 3, or 4?" << endl;
+	cin >> n; 
+	Stencil stencil(n);
 	stencil.stencil_print();
 	MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
 	timeloop(stencil, matrix);
-	cout << endl;
-	cout << "let's make the matrix from grid" << endl;
-	cout << "time to print matrix" << endl;
+	//cout << endl;
+	//cout << "let's make the matrix from grid" << endl;
+	//cout << "time to print matrix" << endl;
 	//matrix.grid_print(); // this line currently crashes your computer, don't run!
 	// repeat the above for other initial conditions.
 	return 0;
