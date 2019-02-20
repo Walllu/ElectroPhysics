@@ -374,11 +374,15 @@ class Linear {
 };
 
 // function for obtain next Linear class object from previous one
-void next_Jacobi(Linear& prev, Linear& next, MMatrix& mat) {
+// modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
+bool next_Jacobi(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
 	double temp;
 	int size = prev.get_size();
 	int x_dim = prev.get_x_dim();
 	int y_dim = prev.get_y_dim();
+	double largest_change = 0;
+	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
+	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
 	for (int n = 0; n < size; n++) {
 		// if the current point is not constant...
 		if (!(prev.is_it_constant_linear(n))) {
@@ -388,9 +392,17 @@ void next_Jacobi(Linear& prev, Linear& next, MMatrix& mat) {
 					temp += prev.get_value_linear(m)*mat.get_point(n, m);
 				}
 			}
-			next.set_value_linear(n, -temp / mat.get_point(n, n));
+			double value_next = -temp / mat.get_point(n, n);
+			next.set_value_linear(n, value_next);
+			if(abs(value_next - prev.get_value_linear(n)) > largest_change){
+				largest_change = abs(value_next - prev.get_value_linear(n));
+			}
 		}
 	}
+	if(largest_change < tolerate){
+		keep_iterating = false;
+	}
+	return keep_iterating;
 }
 
 void timeloop(Stencil& stencil, MMatrix& matrix) {
@@ -400,9 +412,9 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	// time is an integer, time step-size (dt) is a float, and transform is an integer used for debugging purposes - enter 0 for transform if you don'e give a shit about debugging
 	cout << "Maximum time in seconds, and time step-size (dt) : transform too" << endl;
 	cin >> maximum_time_in_seconds >> dt >> transform;  // "transform" is the iteration number that you want to view - transform = 1 is the first time step, 2 is 2nd, etc.
-	cout << "Input your value for alpha" << endl;
-	float alpha;
-	cin >> alpha;
+	cout << "Input your tolerance value" << endl;
+	double tolerance;
+	cin >> tolerance;
 	// make two linearized vectors
 	Linear C(stencil);
 	Linear D = C;
@@ -410,15 +422,21 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	//C.print_linear();
 	bool C_next = true;
 	// iterating through time using the linearized Jacobi method
+	bool keep_iterating = true;
+	double final_time = 0.0;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
 		C_next = !C_next;
 		if (C_next) {
-			next_Jacobi(D, C, matrix);
+			keep_iterating = next_Jacobi(D, C, matrix, tolerance);
 		}
 		else {
-			next_Jacobi(C, D, matrix);
+			keep_iterating = next_Jacobi(C, D, matrix, tolerance);
 		}
-
+		final_time = time;
+		// now we check if the tolerance has been reached
+		if(!keep_iterating){
+			break;
+		}
 	}
 	// done iterating, go to print
 	if (C_next) {
@@ -426,6 +444,13 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	}
 	else {
 		D.print_linear();
+	}
+	cout << endl;
+	// print final time if it is less than requested time limit
+	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
+		cout << "Your final time was: " << final_time << " seconds. Less than the max!" << endl;
+	} else{
+		cout << "Your final time was: " << final_time << " seconds." << endl;
 	}
 }
 int main() {
