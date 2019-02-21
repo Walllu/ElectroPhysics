@@ -310,7 +310,7 @@ class Stencil {
 			cin >> V;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
-					if (abs(initial_values.get_y_position(i)) <= b / 2.0) {
+					if (abs(initial_values.get_y_position(j)) <= b / 2.0) {
 						if (abs(initial_values.get_x_position(i) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, V);
 							constant_locations.set_point(i, j, 1);
