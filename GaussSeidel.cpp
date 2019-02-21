@@ -221,7 +221,7 @@ class Stencil {
 				float x, y;
 				float out_r, inn_r;
 				cout << "type inner and outer radius" << endl;
-				cin >> out_r >> inn_r;
+				cin >> inn_r >> out_r;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
