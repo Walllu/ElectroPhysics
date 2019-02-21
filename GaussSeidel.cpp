@@ -454,11 +454,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
 			prev_value = next.get_value_linear(n);
 			for (int m = 0; m < size; m++) {
 				if (m != n) {
-					//if(m < n){
-						temp += next.get_value_linear(m)*mat.get_point(n, m);
-					//} else { // ---------------------------------------------------here lies the change between Jacobi and Gauss-Seidel
-					//	temp += prev.get_value_linear(m)*mat.get_point(n, m);
-					//}
+					temp += next.get_value_linear(m)*mat.get_point(n, m);
 				}
 			}
 			double value_next = -temp / mat.get_point(n, n);
@@ -484,23 +480,14 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	cout << "Input your tolerance value" << endl;
 	double tolerance;
 	cin >> tolerance;
-	// make two linearized vectors
+	// make one linearized vectors
 	Linear C(stencil);
-	//Linear D = C;
 	// test print one
-	//C.print_linear();
-	//bool C_next = true;
 	// iterating through time using the linearized Jacobi method
 	bool keep_iterating = true;
 	double final_time = 0.0;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-		//C_next = !C_next;
-		//if (C_next) {
 		keep_iterating = next_GaussSeidel(C, matrix, tolerance);
-		//}
-		//else {
-		//	keep_iterating = next_GaussSeidel(C, D, matrix, tolerance);
-		//}
 		final_time = time;
 		// now we check if the tolerance has been reached
 		if(!keep_iterating){
@@ -508,12 +495,7 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 		}
 	}
 	// done iterating, go to print
-	//if (C_next) {
 	C.print_linear();
-	//}
-	//else {
-	//	D.print_linear();
-	//}
 	cout << endl;
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
