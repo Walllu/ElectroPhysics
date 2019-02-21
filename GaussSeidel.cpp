@@ -375,7 +375,7 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_Jacobi(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
+bool next_GaussSeidel(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
 	double temp;
 	int size = prev.get_size();
 	int x_dim = prev.get_x_dim();
@@ -383,13 +383,20 @@ bool next_Jacobi(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
 	double largest_change = 0;
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
+
+	//--------------- The biggest difference between the Jacobi and the Gauss-Seidel methods is that the former only relies on point from the previous
+	//--------------- iteration in time to construct the next one, while the latter also uses new points that have already been evaluated
 	for (int n = 0; n < size; n++) {
 		// if the current point is not constant...
 		if (!(prev.is_it_constant_linear(n))) {
 			temp = 0;
 			for (int m = 0; m < size; m++) {
 				if (m != n) {
-					temp += prev.get_value_linear(m)*mat.get_point(n, m);
+					if(m < n){
+						temp += next.get_value_linear(m)*mat.get_point(n, m);
+					} else { // ---------------------------------------------------here lies the change between Jacobi and Gauss-Seidel
+						temp += prev.get_value_linear(m)*mat.get_point(n, m);
+					}
 				}
 			}
 			double value_next = -temp / mat.get_point(n, n);
@@ -404,7 +411,6 @@ bool next_Jacobi(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
 	}
 	return keep_iterating;
 }
-
 
 void timeloop(Stencil& stencil, MMatrix& matrix) {
 	// working with default initial conditions dx, dy, dt, tmax
@@ -428,10 +434,10 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
 		C_next = !C_next;
 		if (C_next) {
-			keep_iterating = next_Jacobi(D, C, matrix, tolerance);
+			keep_iterating = next_GaussSeidel(D, C, matrix, tolerance);
 		}
 		else {
-			keep_iterating = next_Jacobi(C, D, matrix, tolerance);
+			keep_iterating = next_GaussSeidel(C, D, matrix, tolerance);
 		}
 		final_time = time;
 		// now we check if the tolerance has been reached
