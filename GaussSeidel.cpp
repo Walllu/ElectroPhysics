@@ -48,6 +48,12 @@ class Grid {
 		float get_dy() {
 			return dy; // getter for dy space-step
 		}
+		float get_x_phys(){
+			return x_phys;
+		}
+		float get_y_phys(){
+			return y_phys;
+		}
 		float get_x_position(int i) {
 			return i * dx - x_phys / 2.0;
 		}
@@ -304,20 +310,20 @@ class Stencil {
 			cin >> V;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
-					if (abs(initial_values.get_y_position(i, j)) <= b / 2.0) {
-						if (abs(initial_values.get_x_position(i, j) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+					if (abs(initial_values.get_y_position(j)) <= b / 2.0) {
+						if (abs(initial_values.get_x_position(i) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, V);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) + initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) + initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, -V);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}
@@ -430,34 +436,35 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& prev, Linear& next, MMatrix& mat, double tolerate) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
 	double temp;
-	int size = prev.get_size();
-	int x_dim = prev.get_x_dim();
-	int y_dim = prev.get_y_dim();
+	int size = next.get_size();
+	int x_dim = next.get_x_dim();
+	int y_dim = next.get_y_dim();
 	double largest_change = 0;
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
-
+	double prev_value; // going to use this to save the value of the linear vector at the point, in order to compare difference
 	//--------------- The biggest difference between the Jacobi and the Gauss-Seidel methods is that the former only relies on point from the previous
 	//--------------- iteration in time to construct the next one, while the latter also uses new points that have already been evaluated
 	for (int n = 0; n < size; n++) {
 		// if the current point is not constant...
-		if (!(prev.is_it_constant_linear(n))) {
+		if (!(next.is_it_constant_linear(n))) {
 			temp = 0;
+			prev_value = next.get_value_linear(n);
 			for (int m = 0; m < size; m++) {
 				if (m != n) {
-					if(m < n){
+					//if(m < n){
 						temp += next.get_value_linear(m)*mat.get_point(n, m);
-					} else { // ---------------------------------------------------here lies the change between Jacobi and Gauss-Seidel
-						temp += prev.get_value_linear(m)*mat.get_point(n, m);
-					}
+					//} else { // ---------------------------------------------------here lies the change between Jacobi and Gauss-Seidel
+					//	temp += prev.get_value_linear(m)*mat.get_point(n, m);
+					//}
 				}
 			}
 			double value_next = -temp / mat.get_point(n, n);
 			next.set_value_linear(n, value_next);
-			if(abs(value_next - prev.get_value_linear(n)) > largest_change){
-				largest_change = abs(value_next - prev.get_value_linear(n));
+			if(abs(value_next - prev_value) > largest_change){
+				largest_change = abs(value_next - prev_value);
 			}
 		}
 	}
@@ -479,21 +486,21 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	cin >> tolerance;
 	// make two linearized vectors
 	Linear C(stencil);
-	Linear D = C;
+	//Linear D = C;
 	// test print one
 	//C.print_linear();
-	bool C_next = true;
+	//bool C_next = true;
 	// iterating through time using the linearized Jacobi method
 	bool keep_iterating = true;
 	double final_time = 0.0;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-		C_next = !C_next;
-		if (C_next) {
-			keep_iterating = next_GaussSeidel(D, C, matrix, tolerance);
-		}
-		else {
-			keep_iterating = next_GaussSeidel(C, D, matrix, tolerance);
-		}
+		//C_next = !C_next;
+		//if (C_next) {
+		keep_iterating = next_GaussSeidel(C, matrix, tolerance);
+		//}
+		//else {
+		//	keep_iterating = next_GaussSeidel(C, D, matrix, tolerance);
+		//}
 		final_time = time;
 		// now we check if the tolerance has been reached
 		if(!keep_iterating){
@@ -501,12 +508,12 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 		}
 	}
 	// done iterating, go to print
-	if (C_next) {
-		C.print_linear();
-	}
-	else {
-		D.print_linear();
-	}
+	//if (C_next) {
+	C.print_linear();
+	//}
+	//else {
+	//	D.print_linear();
+	//}
 	cout << endl;
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
