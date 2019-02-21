@@ -272,6 +272,61 @@ class Stencil {
 					}
 				}
 			}
+
+			else if (num == 5) {
+
+			//create problem 5, coupled edge)
+
+			for (int i = 0; i < initial_values.get_x_dim(); i++) {
+				for (int j = 0; j < initial_values.get_y_dim(); j++) {
+					if (j == initial_values.get_y_dim() - 1) {
+
+						initial_values.set_point(i, j, 0);
+						constant_locations.set_point(i, j, 1);
+					}
+					else if (j == 0) {
+						initial_values.set_point(i, j, 0);
+						constant_locations.set_point(i, j, 1);
+					}
+					else {
+
+						initial_values.set_point(i, j, 0);
+						constant_locations.set_point(i, j, 0);
+					}
+				}
+			}
+			double a, b; // x y size of the rectangles
+			cout << endl;
+			cout << "Type x, y size of the rectangles" << endl;
+			cin >> a, b;
+			double V;
+			cout << "provide potential" << endl;
+			cin >> V;
+			for (int i = 0; i < initial_values.get_x_dim(); i++) {
+				for (int j = 0; j < initial_values.get_y_dim(); j++) {
+					if (abs(initial_values.get_y_position(i, j)) <= b / 2.0) {
+						if (abs(initial_values.get_x_position(i, j) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+							initial_values.set_point(i, j, V);
+							constant_locations.set_point(i, j, 1);
+						}
+						else if (abs(initial_values.get_x_position(i, j) + initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+							initial_values.set_point(i, j, -V);
+							constant_locations.set_point(i, j, 1);
+						}
+						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+							initial_values.set_point(i, j, 0);
+							constant_locations.set_point(i, j, 1);
+						}
+						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+							initial_values.set_point(i, j, 0);
+							constant_locations.set_point(i, j, 1);
+						}
+					}
+				}
+			}
+
+		}
+
 			problem_values = initial_values;
 			problem_constant_locations = constant_locations; // 1 represents constant, 0 represents variable
 				// end of problem 1
