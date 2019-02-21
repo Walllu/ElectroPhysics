@@ -48,6 +48,12 @@ class Grid {
 		float get_dy() {
 			return dy; // getter for dy space-step
 		}
+		float get_x_phys() {
+			return x_phys;
+		}
+		float get_y_phys() {
+			return y_phys;
+		}
 		float get_x_position(int i) {
 			return i * dx - x_phys / 2.0;
 		}
@@ -214,8 +220,8 @@ class Stencil {
 				//create problem 3, two cylinders)
 				float x, y;
 				float out_r, inn_r;
-				out_r = 0.5;
-				inn_r = 0.2;
+				cout << "type inner and outer radius" << endl;
+				cin >> out_r >> inn_r;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -243,8 +249,8 @@ class Stencil {
 				//create problem 4, cylinder between walls)
 				float x, y;
 				float out_r, inn_r;
-				out_r = 0.5;
-				inn_r = 0.2;
+				cout << "type inner radius" << endl;
+				cin >> inn_r;
 				for (int i = 0; i < initial_values.get_x_dim() - 1; i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -304,20 +310,20 @@ class Stencil {
 			cin >> V;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
-					if (abs(initial_values.get_y_position(i, j)) <= b / 2.0) {
-						if (abs(initial_values.get_x_position(i, j) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+					if (abs(initial_values.get_y_position(i)) <= b / 2.0) {
+						if (abs(initial_values.get_x_position(i) - initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, V);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) + initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) + initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, -V);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i, j) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) + 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}

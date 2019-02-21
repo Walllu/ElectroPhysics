@@ -220,8 +220,8 @@ class Stencil {
 				//create problem 3, two cylinders)
 				float x, y;
 				float out_r, inn_r;
-				out_r = 0.5;
-				inn_r = 0.2;
+				cout << "type inner and outer radius" << endl;
+				cin >> out_r >> inn_r;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -249,8 +249,8 @@ class Stencil {
 				//create problem 4, cylinder between walls)
 				float x, y;
 				float out_r, inn_r;
-				out_r = 0.5;
-				inn_r = 0.2;
+				cout << "type inner radius" << endl;
+				cin >> inn_r;
 				for (int i = 0; i < initial_values.get_x_dim() - 1; i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -304,7 +304,7 @@ class Stencil {
 			double a, b; // x y size of the rectangles
 			cout << endl;
 			cout << "Type x, y size of the rectangles" << endl;
-			cin >> a, b;
+			cin >> a >> b;
 			double V;
 			cout << "provide potential" << endl;
 			cin >> V;
@@ -323,7 +323,7 @@ class Stencil {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}
-						else if (abs(initial_values.get_x_position(i) - 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
+						else if (abs(initial_values.get_x_position(i) + 3.0*initial_values.get_x_phys() / 8.0) <= a / 2.0) {
 							initial_values.set_point(i, j, 0);
 							constant_locations.set_point(i, j, 1);
 						}
