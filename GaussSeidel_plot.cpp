@@ -170,12 +170,12 @@ private:
 	// problem_values are the 'locations and values of all points in the initial moment
 	// problem_constant_locations has the locations of all constant values in the grid
 public:
-	Stencil(int num) { // we make a constructor that acts differently depending on which input you start with
+	Stencil(int num, int x_dim_arg, int y_dim_arg, float x_phys_arg, float y_phys_arg) { // we make a constructor that acts differently depending on which input you start with
 		//cout << "Input number of x, y dimensions and x, y distances" << endl;
-		int x_dim = 11;
-		int y_dim = 11;
-		float x_phys = 1;
-		float y_phys = 1;
+		int x_dim = x_dim_arg;
+		int y_dim = y_dim_arg;
+		float x_phys = x_phys_arg;
+		float y_phys = y_phys_arg;
 		//cin >> x_dim >> y_dim >> x_phys >> y_phys;
 		Grid initial_values(x_dim, y_dim, x_phys, y_phys), constant_locations(x_dim, y_dim, x_phys, y_phys);
 		if (num == 1) {
@@ -222,9 +222,10 @@ public:
 
 			//create problem 3, two cylinders)
 			float x, y;
-			float out_r, inn_r;
-			cout << "type inner and outer radius" << endl;
-			cin >> inn_r >> out_r;
+			float out_r = 5;
+			float inn_r = 1;
+			//cout << "type inner and outer radius" << endl;
+			//cin >> inn_r >> out_r;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				x = initial_values.get_x_position(i);
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -251,9 +252,9 @@ public:
 		else if (num == 4) {
 			//create problem 4, cylinder between walls)
 			float x, y;
-			float out_r, inn_r;
-			cout << "type inner radius" << endl;
-			cin >> inn_r;
+			float inn_r = 1;
+			//cout << "type inner radius" << endl;
+			//cin >> inn_r;
 			for (int i = 0; i < initial_values.get_x_dim() - 1; i++) {
 				x = initial_values.get_x_position(i);
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -304,13 +305,14 @@ public:
 					}
 				}
 			}
-			double a, b; // x y size of the rectangles
-			cout << endl;
-			cout << "Type x, y size of the rectangles" << endl;
-			cin >> a >> b;
-			double V;
-			cout << "provide potential" << endl;
-			cin >> V;
+			double a = 0;
+			double b = 0; // x y size of the rectangles
+			//cout << endl;
+			//cout << "Type x, y size of the rectangles" << endl;
+			//cin >> a >> b;
+			double V = 0;
+			//cout << "provide potential" << endl;
+			//cin >> V;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
 					if (abs(initial_values.get_y_position(j)) <= b / 2.0) {
