@@ -534,14 +534,14 @@ int main() {
 	//stenc.stencil_print();
 	// call the timeloop
 	//stenc.stencil_print();
-	int n = 2;
+	//int n = 2;
 	//cout << "Which situation do you want to see? 1, 2, 3, or 4?" << endl;
 	//cin >> n;
-	Stencil stencil(n);
+	//Stencil stencil(n);
 	//stencil.stencil_print();
-	MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
+	//MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
 	//matrix.grid_print(); // this line currently crashes your computer, don't run!
-	timeloop(stencil, matrix);
+	//timeloop(stencil, matrix);
 	// repeat the above for other initial conditions.
 	return 0;
 }
