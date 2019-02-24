@@ -1,38 +1,13 @@
 from ROOT import *
 
 
-
-#c = TCanvas()
-
-#h = TH2D("pot", "potential;x;y;#phi", 4, -1., 1., 4, -1., 1.)
-
-
-
-l = [[1,2,3,2],[2,3,3,2],[2,3,3,3],[1,2,4,2]]
-
-
-
-
-
-
-
-#h.Draw("CONT")
-
-
-
-#c.Update()
-
-#c.SaveAs("potential.pdf")
-
-
-
 gInterpreter.LoadFile("./GaussSeidel_plot.cpp")
 
 
 
 n = 2;
 
-length = 101;
+length = 51;
 
 stencil = Stencil(n, length, length, 10, 10);
 
@@ -53,7 +28,7 @@ c = TCanvas()
 
 
 
-h = TH2D("pot", "potential;x;y;#phi", length, -0.5, 5.5, length, -0.5, 5.5)
+h = TH2D("pot", "potential;x;y;#phi", length, -0.1, 10.1, length, -0.1, 10.1)
 
 
 
@@ -61,9 +36,9 @@ for x in range(0, length):
 
     for y in range(0, length):
 
-        xx = float(x) / 10.
+        xx = 10.*float(x) / float(length - 1)
 
-        yy = float(y) / 10.
+        yy = 10.*float(y) / float(length - 1)
 
         binnr = h.FindBin(xx, yy)
 
