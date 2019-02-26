@@ -447,9 +447,8 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, vector<double>& rel_err, vector<vector<double>>& analytic) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, vector<double>& rel_err, vector<double>& analytic) {
 	double temp;
-	int count;
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
@@ -472,13 +471,15 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 				}
 			}
 			double value_next = prev_value*(1- sor) -sor*temp / mat.get_point(n, n);
-
+			// get corresponding analytic value
+			abs_diff += abs(analytic[n] - value_next);
 			next.set_value_linear(n, value_next);
 			if(abs(value_next - prev_value) > largest_change){
 				largest_change = abs(value_next - prev_value);
 			}
 		}
 	}
+	rel_err.push_back(abs_diff/size);
 	if(largest_change < tolerate){
 		keep_iterating = false;
 	}
@@ -513,25 +514,26 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	bool keep_iterating = true;
 	double final_time = 0.0;
 	double x_coord, y_coord, analpot;
-	Grid anal(px_dim, py_dim, px_dim*pdx, py_dim*pdy);
-	vector<vector<double> > analytic;
+	//Grid anal(px_dim, py_dim, px_dim*pdx, py_dim*pdy);
+	vector<double> analytic;
 	// construct the analytic
 	for (int i =0; i < px_dim; i++){
 		x_coord = i*pdx - (px_dim*pdx)/2.;
 		for(int j = 0; j < py_dim; j++){
 			y_coord = j*pdy - (py_dim*pdy)/2.;
 			if(pow(x_coord,2) + pow(y_coord,2) <= pow(2,2)){
-				anal.set_point(i,j,0);
+				analytic.push_back(0);
 			} else if(pow(x_coord,2)+pow(y_coord,2) >= pow(10,2)){
-				anal.set_point(i,j,20);
+				//anal.set_point(i,j,20);
+				analytic.push_back(pot);
 			} else {
 				analpot = pot*(log(sqrt(pow(x_coord,2) + pow(y_coord,2))/2.) / log(10./2.));
-				anal.set_point(i,j,analpot);
+				//anal.set_point(i,j,analpot);
+				analytic.push_back(analpot);
 			}
 		}
 	}
-	anal.grid_print();
-	analytic = anal.get_grid_values();
+	//analytic = anal.get_grid_values();
 
 	vector<double> relative_error;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
@@ -546,7 +548,9 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	// done iterating, go to print
 	C.print_linear();
 	//cout << end;
-
+	for(int i= 0; i < relative_error.size(); i++){
+		cout << relative_error[i] << endl;
+	}
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
 		cout << "Your final time was: " << final_time << " seconds. Less than the max!" << endl;
