@@ -452,7 +452,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
-	double largest_change = 0;
+	//double largest_change = 0;
 	double abs_diff = 0.0;
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
@@ -474,15 +474,19 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 			// get corresponding analytic value
 			abs_diff += abs(analytic[n] - value_next);
 			next.set_value_linear(n, value_next);
-			if(abs(value_next - prev_value) > largest_change){
+			/*if(abs(value_next - prev_value) > largest_change){
 				largest_change = abs(value_next - prev_value);
-			}
+			}*/
+			// -------------------------------------------------------------reworking how tolerance works
 		}
 	}
-	rel_err.push_back(abs_diff/size);
-	if(largest_change < tolerate){
+	if(abs_diff/size < tolerate){
 		keep_iterating = false;
 	}
+	rel_err.push_back(abs_diff/size);
+	/*if(largest_change < tolerate){ //------------------------------------reworking how tolerance works
+		keep_iterating = false;
+	}*/
 	return keep_iterating;
 }
 
@@ -511,29 +515,33 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	double pdx = stencil.get_values().get_dx();
 	double pdy = stencil.get_values().get_dy();
 	double pot = stencil.get_potential();
+	double px_phys = stencil.get_values().get_x_phys();
+	double py_phys = stencil.get_values().get_y_phys();
 	bool keep_iterating = true;
 	double final_time = 0.0;
 	double x_coord, y_coord, analpot;
-	//Grid anal(px_dim, py_dim, px_dim*pdx, py_dim*pdy);
+	Grid anal(px_dim, py_dim, px_dim*pdx, py_dim*pdy);
 	vector<double> analytic;
 	// construct the analytic
 	for (int i =0; i < px_dim; i++){
-		x_coord = i*pdx - (px_dim*pdx)/2.;
+		x_coord = i*pdx - (px_phys)/2.;
 		for(int j = 0; j < py_dim; j++){
-			y_coord = j*pdy - (py_dim*pdy)/2.;
+			y_coord = j*pdy - (py_phys)/2.;
 			if(pow(x_coord,2) + pow(y_coord,2) <= pow(2,2)){
+				anal.set_point(i,j,0);
 				analytic.push_back(0);
 			} else if(pow(x_coord,2)+pow(y_coord,2) >= pow(10,2)){
-				//anal.set_point(i,j,20);
+				anal.set_point(i,j,20);
 				analytic.push_back(pot);
 			} else {
 				analpot = pot*(log(sqrt(pow(x_coord,2) + pow(y_coord,2))/2.) / log(10./2.));
-				//anal.set_point(i,j,analpot);
+				anal.set_point(i,j,analpot);
 				analytic.push_back(analpot);
 			}
 		}
 	}
-	//analytic = anal.get_grid_values();
+	anal.grid_print();
+	cout << "^^^this is the analytical grid" << endl;
 
 	vector<double> relative_error;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
