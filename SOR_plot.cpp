@@ -447,6 +447,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
     int x_dim = next.get_x_dim();
     int y_dim = next.get_y_dim();
     double largest_change = 0;
+	double sor = 1.5;//2/(1+sin(3.14159/size));
     //double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
     bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
     double prev_value; // going to use this to save the value of the linear vector at the point, in order to compare difference
@@ -462,7 +463,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
                     temp += next.get_value_linear(m)*mat.get_point(n, m);
                 }
             }
-            double value_next = -temp / mat.get_point(n, n);
+            double value_next = (1.0 - sor)*prev_value - (sor*temp / mat.get_point(n, n));
             next.set_value_linear(n, value_next);
             if (abs(value_next - prev_value) > largest_change) {
                 largest_change = abs(value_next - prev_value);

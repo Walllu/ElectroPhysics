@@ -1,13 +1,13 @@
 from ROOT import *
 
 
-gInterpreter.LoadFile("GaussSeidel_plot.cpp")
+gInterpreter.LoadFile("SOR_plot.cpp")
 
 
 
-n = 5;
+n = 3;
 
-length = 11;
+length = 51;
 
 binsWidth = 5./(length - 1)
 

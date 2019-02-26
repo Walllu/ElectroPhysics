@@ -436,12 +436,13 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
 	double temp;
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
 	double largest_change = 0;
+	
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
 	double prev_value; // going to use this to save the value of the linear vector at the point, in order to compare difference
@@ -457,7 +458,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
 					temp += next.get_value_linear(m)*mat.get_point(n, m);
 				}
 			}
-			double value_next = -temp / mat.get_point(n, n);
+			double value_next = prev_value*(1- sor) -sor*temp / mat.get_point(n, n);
 			next.set_value_linear(n, value_next);
 			if(abs(value_next - prev_value) > largest_change){
 				largest_change = abs(value_next - prev_value);
@@ -482,12 +483,17 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	cin >> tolerance;
 	// make one linearized vectors
 	Linear C(stencil);
+	double sor = 2. / (1 + sin(3.14159265358979323846 / (stencil.get_values().get_x_dim() )));
+	cout << sor << endl;
+	//cout << "Input your successive over-relaxation value" << endl;
+	//double sor;
+	//cin >> sor;
 	// test print one
 	// iterating through time using the linearized Jacobi method
 	bool keep_iterating = true;
 	double final_time = 0.0;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-		keep_iterating = next_GaussSeidel(C, matrix, tolerance);
+		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor);
 		final_time = time;
 		// now we check if the tolerance has been reached
 		if(!keep_iterating){
@@ -520,7 +526,7 @@ int main() {
 	Stencil stencil(n);
 	stencil.stencil_print();
 	MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
-	matrix.grid_print(); // this line currently crashes your computer, don't run!
+	//matrix.grid_print(); // this line currently crashes your computer, don't run!
 	timeloop(stencil, matrix);
 	// repeat the above for other initial conditions.
 	return 0;
