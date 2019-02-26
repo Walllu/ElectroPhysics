@@ -400,10 +400,10 @@ void timeloop(Stencil& stencil){
         } else {
             if(A_next){
                 // A is next up --> next_u = A; prev_u = B;
-	      Heat2D_next_u(A, B, stencil, alpha, dt, tolerance);
+	            keep_iterating = Heat2D_next_u(A, B, stencil, alpha, dt, tolerance);
             } else{
                 // B is next up --> next_u = B; prev_u = A;
-	      Heat2D_next_u(B, A, stencil, alpha, dt, tolerance);
+	            keep_iterating = Heat2D_next_u(B, A, stencil, alpha, dt, tolerance);
             }
             if(time == transform*dt){ // debugging purposes
                 cout << time << endl;
@@ -443,7 +443,7 @@ int main(){
     cout << "let's make the matrix from grid" << endl;
     MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
     cout << "time to print matrix" << endl;
-    matrix.grid_print(); // this line currently crashes your computer, don't run!
+    //matrix.grid_print(); // this line currently crashes your computer, don't run!
     // repeat the above for other initial conditions.
     return 0;
 }
