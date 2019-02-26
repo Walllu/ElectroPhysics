@@ -60,6 +60,9 @@ class Grid {
 		float get_y_position(int i) {
 			return i * dy - y_phys / 2.0;
 		}
+		vector<vector<double> > get_grid_values(){
+			return grid;
+		}
 		void set_point(int i, int j, double val) {
 			grid[i][j] = val; // sets a point in the grid to "val"
 			// i refers to the y position, j to the x position
@@ -167,6 +170,7 @@ class Stencil {
 	private:
 		// Grids that represnet the locations and values of all the constants
 		Grid problem_values, problem_constant_locations;
+		double potential;
 		// problem_values are the 'locations and values of all points in the initial moment
 		// problem_constant_locations has the locations of all constant values in the grid
 	public:
@@ -178,6 +182,7 @@ class Stencil {
 			Grid initial_values(x_dim, y_dim, x_phys, y_phys), constant_locations(x_dim, y_dim, x_phys, y_phys);
 			if (num == 1) {
 				//create problem 1, I'll just do hot walls)
+				potential = 20;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
 						if (i == initial_values.get_x_dim() - 1 || j == initial_values.get_y_dim() - 1 || i == 0 || j == 0) {
@@ -196,7 +201,7 @@ class Stencil {
 			else if (num == 2) {
 
 				//create problem 1, I'll just do hot walls)
-
+				potential = 20;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
 						if (j == initial_values.get_y_dim() - 1) {
@@ -221,7 +226,9 @@ class Stencil {
 				float x, y;
 				float out_r, inn_r;
 				cout << "type inner and outer radius" << endl;
+				cout << "make inner = 2, outer = 10 if you want a good analytic solution" << endl;
 				cin >> inn_r >> out_r;
+				potential = 20;
 				for (int i = 0; i < initial_values.get_x_dim(); i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -251,6 +258,7 @@ class Stencil {
 				float out_r, inn_r;
 				cout << "type inner radius" << endl;
 				cin >> inn_r;
+				potential = 20;
 				for (int i = 0; i < initial_values.get_x_dim() - 1; i++) {
 					x = initial_values.get_x_position(i);
 					for (int j = 0; j < initial_values.get_y_dim(); j++) {
@@ -282,7 +290,6 @@ class Stencil {
 			else if (num == 5) {
 
 			//create problem 5, coupled edge)
-
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
 					if (j == initial_values.get_y_dim() - 1) {
@@ -308,6 +315,7 @@ class Stencil {
 			double V;
 			cout << "provide potential" << endl;
 			cin >> V;
+			potential = V;
 			for (int i = 0; i < initial_values.get_x_dim(); i++) {
 				for (int j = 0; j < initial_values.get_y_dim(); j++) {
 					if (abs(initial_values.get_y_position(j)) <= b / 2.0) {
@@ -352,6 +360,9 @@ class Stencil {
 		}
 		Grid get_constants() {
 			return problem_constant_locations;
+		}
+		double get_potential(){
+			return potential;
 		}
 		double get_value_at_point(int i, int j) {
 			return problem_values.get_point(i, j);
@@ -436,14 +447,14 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, vector<double>& rel_err, vector<vector<double>>& analytic) {
 	double temp;
 	int count;
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
 	double largest_change = 0;
-	
+	double abs_diff = 0.0;
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
 	double prev_value; // going to use this to save the value of the linear vector at the point, in order to compare difference
@@ -453,7 +464,6 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
 		// if the current point is not constant...
 		if (!(next.is_it_constant_linear(n))) {
 			temp = 0;
-			count = 0;
 			prev_value = next.get_value_linear(n);
 			for (int m = 0; m < size; m++) {
 				if (m != n) {
@@ -462,6 +472,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
 				}
 			}
 			double value_next = prev_value*(1- sor) -sor*temp / mat.get_point(n, n);
+
 			next.set_value_linear(n, value_next);
 			if(abs(value_next - prev_value) > largest_change){
 				largest_change = abs(value_next - prev_value);
@@ -491,14 +502,42 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	//cout << "Input your successive over-relaxation value" << endl;
 	//double sor;
 	//cin >> sor;
-	// test print one
 	// iterating through time using the linearized Jacobi method
+
+	// ------------------------------------------------ Make analytic solution for cylinder
+	int px_dim = stencil.get_values().get_x_dim();
+	int py_dim = stencil.get_values().get_y_dim();
+	double pdx = stencil.get_values().get_dx();
+	double pdy = stencil.get_values().get_dy();
+	double pot = stencil.get_potential();
 	bool keep_iterating = true;
 	double final_time = 0.0;
+	double x_coord, y_coord, analpot;
+	Grid anal(px_dim, py_dim, px_dim*pdx, py_dim*pdy);
+	vector<vector<double> > analytic;
+	// construct the analytic
+	for (int i =0; i < px_dim; i++){
+		x_coord = i*pdx - (px_dim*pdx)/2.;
+		for(int j = 0; j < py_dim; j++){
+			y_coord = j*pdy - (py_dim*pdy)/2.;
+			if(pow(x_coord,2) + pow(y_coord,2) <= pow(2,2)){
+				anal.set_point(i,j,0);
+			} else if(pow(x_coord,2)+pow(y_coord,2) >= pow(10,2)){
+				anal.set_point(i,j,20);
+			} else {
+				analpot = pot*(log(sqrt(pow(x_coord,2) + pow(y_coord,2))/2.) / log(10./2.));
+				anal.set_point(i,j,analpot);
+			}
+		}
+	}
+	anal.grid_print();
+	analytic = anal.get_grid_values();
+
+	vector<double> relative_error;
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor);
+		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor, relative_error, analytic);
 		final_time = time;
-		cout << time << endl;
+		//cout << time << endl;
 		// now we check if the tolerance has been reached
 		if(!keep_iterating){
 			break;
@@ -506,7 +545,8 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	}
 	// done iterating, go to print
 	C.print_linear();
-	cout << endl;
+	//cout << end;
+
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
 		cout << "Your final time was: " << final_time << " seconds. Less than the max!" << endl;
