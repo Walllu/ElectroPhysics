@@ -438,6 +438,7 @@ class Linear {
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
 bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
 	double temp;
+	int count;
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
@@ -452,9 +453,11 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
 		// if the current point is not constant...
 		if (!(next.is_it_constant_linear(n))) {
 			temp = 0;
+			count = 0;
 			prev_value = next.get_value_linear(n);
 			for (int m = 0; m < size; m++) {
 				if (m != n) {
+					// We can improve this (premultiply this)
 					temp += next.get_value_linear(m)*mat.get_point(n, m);
 				}
 			}
@@ -495,6 +498,7 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
 		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor);
 		final_time = time;
+		cout << time << endl;
 		// now we check if the tolerance has been reached
 		if(!keep_iterating){
 			break;
