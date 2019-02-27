@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <iomanip>
 using namespace std;
 
 // a helper class that defines the grid and grid spacing
@@ -452,7 +453,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
 	int y_dim = next.get_y_dim();
-	//double largest_change = 0;
+	double largest_change = 0;
 	double abs_diff = 0.0;
 	//double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
 	bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
@@ -474,19 +475,19 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 			// get corresponding analytic value
 			abs_diff += abs(analytic[n] - value_next);
 			next.set_value_linear(n, value_next);
-			/*if(abs(value_next - prev_value) > largest_change){
+			if(abs(value_next - prev_value) > largest_change){
 				largest_change = abs(value_next - prev_value);
-			}*/
+			}
 			// -------------------------------------------------------------reworking how tolerance works
 		}
 	}
-	if(abs_diff/size < tolerate){
+	/*if(abs_diff/size < tolerate){
+		keep_iterating = false;
+		}*/
+	rel_err.push_back(abs_diff/size);
+	if(largest_change < tolerate){ //------------------------------------reworking how tolerance works
 		keep_iterating = false;
 	}
-	rel_err.push_back(abs_diff/size);
-	/*if(largest_change < tolerate){ //------------------------------------reworking how tolerance works
-		keep_iterating = false;
-	}*/
 	return keep_iterating;
 }
 
@@ -544,21 +545,43 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	cout << "^^^this is the analytical grid" << endl;
 
 	vector<double> relative_error;
+	vector<double> residuals;
+	double tempstore1, analytic_abs_sum; // for making residual
+	for(int e = 0; e < C.get_size();e++){
+	  analytic_abs_sum += abs(analytic[e]);
+	}
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
 		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor, relative_error, analytic);
 		final_time = time;
 		//cout << time << endl;
 		// now we check if the tolerance has been reached
-		if(!keep_iterating){
-			break;
+		
+		tempstore1 = 0;
+		for(int i = 0; i < C.get_size();i++){
+		  // We want to get the (absolute?) difference between analytic and our current grid
+		  // to get the residual for this step, to decide whether we keep iterating
+		  tempstore1 += abs(analytic[i] - C.get_value_linear(i));
 		}
+		// store the current residual
+		residuals.push_back(tempstore1/analytic_abs_sum);
+		// residual breaking condition
+		if(tempstore1/analytic_abs_sum < tolerance){
+		  keep_iterating = false;
+		  cout << "Residual was below tolerance" << endl;
+		  break;
+		}
+		/*if(!keep_iterating){
+		  cout << "original tolerance break" << endl;
+		  break;
+		}*/
 	}
 	// done iterating, go to print
-	C.print_linear();
+	//C.print_linear();
 	//cout << end;
-	for(int i= 0; i < relative_error.size(); i++){
-		cout << relative_error[i] << endl;
-	}
+	/*for(int i= 0; i < relative_error.size(); i++){
+	  cout << relative_error[i] << endl;
+	}*/
+	cout << relative_error.size() << endl; 
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
 		cout << "Your final time was: " << final_time << " seconds. Less than the max!" << endl;
@@ -576,6 +599,7 @@ int main() {
 	//stenc.stencil_print();
 	// call the timeloop
 	//stenc.stencil_print();
+  cout.precision(16);
 	int n;
 	cout << "Which situation do you want to see? 1, 2, 3, or 4?" << endl;
 	cin >> n; 
