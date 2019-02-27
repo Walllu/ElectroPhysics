@@ -448,7 +448,7 @@ class Linear {
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, vector<double>& rel_err, vector<double>& analytic) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, vector<double>& rel_err, vector<double>& analytic, vector<double>& lchange) {
 	double temp;
 	int size = next.get_size();
 	int x_dim = next.get_x_dim();
@@ -485,6 +485,7 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor, v
 		keep_iterating = false;
 		}*/
 	rel_err.push_back(abs_diff/size);
+	lchange.push_back(largest_change);
 	if(largest_change < tolerate){ //------------------------------------reworking how tolerance works
 		keep_iterating = false;
 	}
@@ -544,6 +545,7 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	anal.grid_print();
 	cout << "^^^this is the analytical grid" << endl;
 
+	vector<double> largest_changes; // this vector is for George's plot. This stores the largest change for each iteration until breaking
 	vector<double> relative_error;
 	vector<double> residuals;
 	double tempstore1, analytic_abs_sum; // for making residual
@@ -551,7 +553,7 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	  analytic_abs_sum += abs(analytic[e]);
 	}
 	for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor, relative_error, analytic);
+		keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor, relative_error, analytic, largest_changes);
 		final_time = time;
 		//cout << time << endl;
 		// now we check if the tolerance has been reached
@@ -570,10 +572,10 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 		  cout << "Residual was below tolerance" << endl;
 		  break;
 		}
-		/*if(!keep_iterating){
+		if(!keep_iterating){
 		  cout << "original tolerance break" << endl;
 		  break;
-		}*/
+		}
 	}
 	// done iterating, go to print
 	//C.print_linear();
@@ -581,6 +583,9 @@ void timeloop(Stencil& stencil, MMatrix& matrix) {
 	/*for(int i= 0; i < relative_error.size(); i++){
 	  cout << relative_error[i] << endl;
 	}*/
+	for(int i= 0; i < largest_changes.size(); i++){
+	  cout << largest_changes[i] << endl;
+	}
 	cout << relative_error.size() << endl; 
 	// print final time if it is less than requested time limit
 	if(final_time<maximum_time_in_seconds - dt){ // had to put "- dt" because we iterate up to but not including max_time_in_seconds
