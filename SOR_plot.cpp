@@ -3,6 +3,7 @@
 #include <cmath>
 using namespace std;
 
+
 // a helper class that defines the grid and grid spacing
 class Grid {
 protected:
@@ -11,17 +12,7 @@ protected:
     float dx, dy;   // grid spacing in each x,y direction
     vector<vector <double> > grid; // the actual grid of some dimension
 public:
-    Grid() /*: x_dim(13), y_dim(13), x_phys(1), y_phys(1)*/ {
-        // default configuration
-        /*dx = x_phys/x_dim;
-         dy = y_phys/y_dim;
-         vector<double> y_axis(y_dim); // construct the grid of zeros
-         vector< vector<double> > x_axis;
-         for(int i=0;i<x_dim;i++){
-         x_axis.push_back(y_axis);
-         }
-         grid = x_axis; // default 0's matrix*/
-        
+    Grid() {
     }
     Grid(int x_dim_arg, int y_dim_arg, float x_phys_arg, float y_phys_arg) : x_dim(x_dim_arg), y_dim(y_dim_arg), x_phys(x_phys_arg), y_phys(y_phys_arg) {
         // this is a more flexible default starter grid of zeros
@@ -68,27 +59,24 @@ public:
         return grid[i][j]; // getter for value of point in grid
         // i refers to the y position, j to the x position
     }
-    void grid_print() {  // method for printing the whole grid
-        for (int i = 0; i < x_dim; i++) {
-            for (int j = 0; j < y_dim; j++) {
-                cout << "(" << grid[i][j] << ")";
-            }
-            cout << endl;
-        }
-    }
 };
 
 class MMatrix : public Grid {
 public:
-    // This constructor works specifically to create an 'M' matrix specifically from a Grid
+    // This constructor works specifically to create an 'M' matrix from a Grid
     // just call this constructor (inputting a Grid) and it will work
+    
     MMatrix(Grid grid_to_construct_from) {
         x_dim = grid_to_construct_from.get_x_dim(); // set x_dim of 'M' matrix
+        
         y_dim = grid_to_construct_from.get_y_dim(); // set y_dim of 'M' matrix - could be different in general
+        
         int M_dim = x_dim * y_dim; // helper variable for generating grid
         //cout << M_dim << endl;
+        
         vector< vector<double> > Mcolumn; // now let's create this thing...
         // for each grid point in the original we want to make a new 'M' matrix row
+        
         for (int current_point = 0; current_point < M_dim; current_point++) {
             vector<double> Mrow(M_dim);
             Mrow[current_point] = -4; // this will always occur
@@ -232,7 +220,7 @@ public:
                     y = initial_values.get_y_position(j);
                     if (x*x + y * y >= out_r * out_r) {
                         
-                        initial_values.set_point(i, j, 20);
+                        initial_values.set_point(i, j, 10);
                         constant_locations.set_point(i, j, 1);
                     }
                     else if (x*x + y * y <= inn_r * inn_r) {
@@ -253,20 +241,19 @@ public:
             //create problem 4, cylinder between walls)
             float x, y;
             float inn_r = 1;
-            //cout << "type inner radius" << endl;
-            //cin >> inn_r;
-            for (int i = 0; i < initial_values.get_x_dim() - 1; i++) {
+            
+            for (int i = 0; i < initial_values.get_x_dim(); i++) {
                 x = initial_values.get_x_position(i);
                 for (int j = 0; j < initial_values.get_y_dim(); j++) {
                     y = initial_values.get_y_position(j);
                     if (j == 0) {
                         
-                        initial_values.set_point(i, j, 20);
+                        initial_values.set_point(i, j, 10);
                         constant_locations.set_point(i, j, 1);
                     }
                     else if (j == initial_values.get_y_dim() - 1) {
                         
-                        initial_values.set_point(i, j, -20);
+                        initial_values.set_point(i, j, -10);
                         constant_locations.set_point(i, j, 1);
                     }
                     else if (x*x + y * y <= inn_r * inn_r) {
@@ -305,14 +292,11 @@ public:
                     }
                 }
             }
-            double a = 0.5;
+            double a = 1;
             double b = 0.5; // x y size of the rectangles
-            //cout << endl;
-            //cout << "Type x, y size of the rectangles" << endl;
-            //cin >> a >> b;
+            
             double V = 10;
-            //cout << "provide potential" << endl;
-            //cin >> V;
+            
             for (int i = 0; i < initial_values.get_x_dim(); i++) {
                 for (int j = 0; j < initial_values.get_y_dim(); j++) {
                     if (abs(initial_values.get_y_position(j)) <= b / 2.0) {
@@ -344,23 +328,19 @@ public:
         
         
     }
-    void stencil_print() {
-        for (int i = 0; i < problem_values.get_x_dim(); i++) {
-            for (int j = 0; j < problem_values.get_y_dim(); j++) {
-                cout << "(" << problem_values.get_point(i, j) << "," << problem_constant_locations.get_point(i, j) << ")";
-            }
-            cout << endl;
-        }
-    }
+    
     Grid get_values() {
         return problem_values;
     }
+    
     Grid get_constants() {
         return problem_constant_locations;
     }
+    
     double get_value_at_point(int i, int j) {
         return problem_values.get_point(i, j);
     }
+    
     bool is_it_constant(int i, int j) {
         if (problem_constant_locations.get_point(i, j) == 1) {
             return true;
@@ -369,6 +349,7 @@ public:
             return false;
         }
     }
+    
 };
 
 // class for linearized vector
@@ -379,30 +360,31 @@ private:
     int size; // length of the arrays
     int x_dim; // x dim
     int y_dim; // y dim
+    
 public:
     Linear(Stencil s) {
         x_dim = s.get_values().get_x_dim();
         y_dim = s.get_values().get_y_dim();
         size = x_dim * y_dim;
+        
         vector<double> temp_vec_potential(size, 0);
+        vector<int> make_vec_const(size, 0);
+
         for (int i = 0; i < x_dim; i++) {
             for (int j = 0; j < x_dim; j++) {
                 temp_vec_potential[i + j * x_dim] = s.get_value_at_point(i, j);
-            }
-        }
-        vec_potential = temp_vec_potential;
-        
-        vector<int> make_vec_const(size, 0);
-        for (int i = 0; i < x_dim; i++) {
-            for (int j = 0; j < x_dim; j++) {
                 if (s.is_it_constant(i, j)) {
                     make_vec_const[i + j * x_dim] = 1;
                 }
                 else {
                     make_vec_const[i + j * x_dim] = 0;
                 }
+                
             }
         }
+        
+        vec_potential = temp_vec_potential;
+        
         vec_const = make_vec_const;
     };
     float get_size() {
@@ -420,14 +402,7 @@ public:
     void set_value_linear(int i, double val) {
         vec_potential[i] = val;
     }
-    void print_linear() {
-        for (int i = 0; i < x_dim; i++) {
-            cout << endl;
-            for (int index = i; index < size; index += x_dim) {
-                cout << vec_potential[index] << " ";
-            }
-        }
-    }
+    
     
     bool is_it_constant_linear(int i) {
         if (vec_const[i] == 1) {
@@ -441,14 +416,10 @@ public:
 
 // function for obtain next Linear class object from previous one
 // modified now to look at the tolerance of the iterations - returning false will signal to the timeloop to cut iteration short
-bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
+bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate, double sor) {
     double temp;
     int size = next.get_size();
-    int x_dim = next.get_x_dim();
-    int y_dim = next.get_y_dim();
     double largest_change = 0;
-	double sor = 1.5;//2/(1+sin(3.14159/size));
-    //double tolerate = 0.01; // ---------------if the largest_change is less than this value, we want to stop iterating
     bool keep_iterating = true; // ---------- this boolean will inform the time loop to keep iterating, given tolerance
     double prev_value; // going to use this to save the value of the linear vector at the point, in order to compare difference
     //--------------- The biggest difference between the Jacobi and the Gauss-Seidel methods is that the former only relies on point from the previous
@@ -460,21 +431,28 @@ bool next_GaussSeidel(Linear& next, MMatrix& mat, double tolerate) {
             prev_value = next.get_value_linear(n);
             for (int m = 0; m < size; m++) {
                 if (m != n) {
+                    // We can improve this (premultiply this)
                     temp += next.get_value_linear(m)*mat.get_point(n, m);
                 }
             }
-            double value_next = (1.0 - sor)*prev_value - (sor*temp / mat.get_point(n, n));
+            double value_next = prev_value*(1- sor) -sor*temp / mat.get_point(n, n);
+            // get corresponding analytic value
             next.set_value_linear(n, value_next);
-            if (abs(value_next - prev_value) > largest_change) {
+            if(abs(value_next - prev_value) > largest_change){
                 largest_change = abs(value_next - prev_value);
             }
+            // -------------------------------------------------------------reworking how tolerance works
         }
     }
-    if (largest_change < tolerate) {
+    /*if(abs_diff/size < tolerate){
+     keep_iterating = false;
+     }*/
+    if(largest_change < tolerate){ //------------------------------------reworking how tolerance works
         keep_iterating = false;
     }
     return keep_iterating;
 }
+
 
 vector< vector<double> > timeloop(Stencil& stencil, MMatrix& matrix) {
     // working with default initial conditions dx, dy, dt, tmax
@@ -484,16 +462,17 @@ vector< vector<double> > timeloop(Stencil& stencil, MMatrix& matrix) {
     //cout << "Maximum time in seconds, and time step-size (dt) : transform too" << endl;
     //cin >> maximum_time_in_seconds >> dt >> transform;  // "transform" is the iteration number that you want to view - transform = 1 is the first time step, 2 is 2nd, etc.
     //cout << "Input your tolerance value" << endl;
-    double tolerance = 0.01;
+    double tolerance = 0.0001;
     //cin >> tolerance;
     // make one linearized vectors
     Linear C(stencil);
-    // test print one
+    double sor = 2. / (1 + sin(3.14159265358979323846 / (stencil.get_values().get_x_dim() )));
+    
     // iterating through time using the linearized Jacobi method
     bool keep_iterating = true;
     double final_time = 0.0;
     for (double time = 0.0; time < maximum_time_in_seconds; time += dt) {
-        keep_iterating = next_GaussSeidel(C, matrix, tolerance);
+        keep_iterating = next_GaussSeidel(C, matrix, tolerance, sor);
         final_time = time;
         // now we check if the tolerance has been reached
         if (!keep_iterating) {
@@ -504,45 +483,24 @@ vector< vector<double> > timeloop(Stencil& stencil, MMatrix& matrix) {
     int x_dim = C.get_x_dim();
     int y_dim = C.get_y_dim();
     vector< vector<double> > print;
+    
     vector<double> v;
     for (int i = 0; i < x_dim; i++) {
         for (int j = 0; j < y_dim; j++) {
             v.push_back(C.get_value_linear(i + j * x_dim));
         }
+        
         print.push_back(v);
         v.clear();
         //cout << "hey" << endl;
     }
-    return print;
-    // done iterating, go to print
-    //C.print_linear();
-    //cout << endl;
-    // print final time if it is less than requested time limit
-    /*if (final_time < maximum_time_in_seconds - dt) { // had to put "- dt" because we iterate up to but not including max_time_in_seconds
-     cout << "Your final time was: " << final_time << " seconds. Less than the max!" << endl;
-     }
-     else {
-     cout << "Your final time was: " << final_time << " seconds." << endl;
-     }*/
-}
-int main() {
-    // Program for calculating the FTCS Heat Diffusion from initial conditions - modifying the initial conditions and calling the correct Stencil constructor
-    // one can recreate an electric potential situation as well.
-    // The program is structured so that we can run a timeloop on a specfic situation by creating the Stencil, and calling the "timeloop" function on it
-    // for example:
     
-    // create stencil for the simulation
-    //stenc.stencil_print();
-    // call the timeloop
-    //stenc.stencil_print();
-    //int n = 2;
-    //cout << "Which situation do you want to see? 1, 2, 3, or 4?" << endl;
-    //cin >> n;
-    //Stencil stencil(n);
-    //stencil.stencil_print();
-    //MMatrix matrix(stencil.get_values()); // this currently takes a long time to run
-    //matrix.grid_print(); // this line currently crashes your computer, don't run!
-    //timeloop(stencil, matrix);
-    // repeat the above for other initial conditions.
+    return print;
+}
+
+
+
+int main() {
+  
     return 0;
 }
