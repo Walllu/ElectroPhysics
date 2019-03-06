@@ -1,13 +1,13 @@
 from ROOT import *
 
 
-gInterpreter.LoadFile("SOR_plot.cpp")
+gInterpreter.LoadFile("GaussSeidel_Manuel_plot.cpp")
 
 
 
-n = 3;
+n = 4;
 
-length = 51;
+length = 101;
 
 binsWidth = 5./(length - 1)
 
@@ -48,5 +48,5 @@ h.Draw("SURF2")
 
 c.Update()
 
-c.SaveAs("potential2.pdf")
+c.SaveAs("potentialT.pdf")
 
